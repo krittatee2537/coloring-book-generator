@@ -596,6 +596,15 @@ footer{
       <button data-val="1:1">จัตุรัส</button>
     </div>
 
+    <div class="group-label">สไตล์ภาพ</div>
+    <div class="pills" id="stylePills">
+      <button data-val="none" class="active">ธรรมดา</button>
+      <button data-val="ghibli">Ghibli Studio</button>
+      <button data-val="shonen">Shonen Jump</button>
+      <button data-val="marvel">Marvel Comics</button>
+      <button data-val="disney">Disney</button>
+    </div>
+
     <div class="group-label">จำนวนภาพที่สุ่มต่อ 1 คำสั่ง</div>
     <div class="pills" id="countPills">
       <button data-val="1" class="active">1 ภาพ</button>
@@ -775,7 +784,7 @@ footer{
 </div>
 
 <script>
-const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', count: 1, busy: false, progress: null, referenceImage: null };
+const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', style: 'none', count: 1, busy: false, progress: null, referenceImage: null };
 
 const els = {
   apiKey: document.getElementById('apiKey'),
@@ -789,6 +798,7 @@ const els = {
   refRemoveBtn: document.getElementById('refRemoveBtn'),
   complexityPills: document.getElementById('complexityPills'),
   ratioPills: document.getElementById('ratioPills'),
+  stylePills: document.getElementById('stylePills'),
   countPills: document.getElementById('countPills'),
   model: document.getElementById('model'),
   genBtn: document.getElementById('genBtn'),
@@ -873,6 +883,7 @@ function setupPills(el, onPick){
 }
 setupPills(els.complexityPills, v => state.complexity = v);
 setupPills(els.ratioPills, v => { state.ratio = v; applyRatioToCanvas(); });
+setupPills(els.stylePills, v => { state.style = v; });
 setupPills(els.countPills, v => state.count = parseInt(v, 10));
 
 function applyRatioToCanvas(){
@@ -887,7 +898,15 @@ const VARIATIONS = [
   "Compose it as a decorative arrangement, with the subject framed by border elements from its own world.",
 ];
 
-function buildPrompt(description, complexity, aspectRatio, variationIndex, total, hasReference){
+const STYLE_MAP = {
+  none:   '',
+  ghibli: "Studio-Ghibli-inspired storybook style: soft, whimsical character shapes, gentle rounded forms, lush nature-filled scenery, dreamy and cozy atmosphere — expressed purely as line art (no color).",
+  shonen: "Shonen-manga-inspired style: bold dynamic linework, expressive action poses, dramatic speed lines and angles, classic black-and-white manga inking with screentone-style hatching for texture instead of color.",
+  marvel: "Western-superhero-comic-inspired style: bold confident inked outlines, heroic dynamic poses, crosshatching and halftone-dot texture used for shading instead of color, classic comic-panel energy.",
+  disney: "Classic-animated-storybook-inspired style: friendly rounded character design, large expressive eyes, warm fairy-tale charm, smooth clean animation-style linework.",
+};
+
+function buildPrompt(description, complexity, aspectRatio, variationIndex, total, hasReference, style){
   const map = {
     simple: "Very simple and bold: thick, smooth, continuous outlines only, minimal interior detail, large simple shapes, no fine linework, no cross-hatching, no texture — ideal for a young child (ages 3-6) to color easily.",
     medium: "Moderate detail: clear bold outlines with some simple interior linework to define features, balanced complexity — ideal for a child (ages 7-12).",
@@ -900,11 +919,12 @@ function buildPrompt(description, complexity, aspectRatio, variationIndex, total
   const referenceNote = hasReference
     ? `\nA reference image is attached. Use it as inspiration for the subject's appearance, pose, and composition only — do not copy its colors, shading, or photographic style. Reinterpret it completely as pure black-and-white coloring-book line art following the strict rules below.`
     : '';
+  const styleNote = (style && STYLE_MAP[style]) ? `\nArt style direction: ${STYLE_MAP[style]}` : '';
   return `Create a single black-and-white coloring book page.
 Subject: ${description}
 Style requirement: ${map[complexity]}
-Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.
-Image aspect ratio: ${ratioLabel}.${referenceNote}${variation}`;
+Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows unless specifically noted in the art style direction below. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers. Do not depict any existing copyrighted character, logo, or trademark — only the original subject described above, rendered purely in the spirit of the requested art style.
+Image aspect ratio: ${ratioLabel}.${styleNote}${referenceNote}${variation}`;
 }
 
 function showError(msg){ els.errorBox.innerHTML = `<div class="error">${msg}</div>`; }
@@ -1055,7 +1075,7 @@ els.genBtn.onclick = async () => {
 
     try{
       const result = await callGemini(apiKey, els.model.value,
-        buildPrompt(description, state.complexity, state.ratio, i, total, !!state.referenceImage),
+        buildPrompt(description, state.complexity, state.ratio, i, total, !!state.referenceImage, state.style),
         state.referenceImage);
       const id = Date.now().toString(36) + i;
       state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description, ratio: state.ratio });
