@@ -726,6 +726,15 @@ footer{
         <button data-val="9:16">แนวตั้ง</button>
       </div>
 
+      <div class="group-label">สไตล์ภาพ</div>
+      <div class="pills" id="vidStylePills">
+        <button data-val="default" class="active">การ์ตูน 3D</button>
+        <button data-val="ghibli">Ghibli Studio</button>
+        <button data-val="shonen">Shonen Jump</button>
+        <button data-val="marvel">Marvel Comics</button>
+        <button data-val="disney">Disney</button>
+      </div>
+
       <div class="estimate">
         <span class="figures" id="estFigures">—</span>
         <span class="note" id="estNote">ราคาประมาณจากอัตราของ Google</span>
@@ -1173,6 +1182,7 @@ const vs = {
   totalSeconds: 180,
   veo: 'lite',
   ratio: '16:9',
+  style: 'default',
   story: null,          // {title, summary, scenes:[{title, prompt, narration}]}
   clips: [],            // {index, status, url, blob}
   rendering: false,
@@ -1191,6 +1201,7 @@ const ve = {
   lengthPills: document.getElementById('lengthPills'),
   veoPills: document.getElementById('veoPills'),
   ratioPills: document.getElementById('vidRatioPills'),
+  stylePills: document.getElementById('vidStylePills'),
   estFigures: document.getElementById('estFigures'),
   storyBtn: document.getElementById('storyBtn'),
   errorBox: document.getElementById('vidErrorBox'),
@@ -1243,6 +1254,7 @@ setupPills(ve.agePills,    v => { vs.age = v; });
 setupPills(ve.lengthPills, v => { vs.totalSeconds = parseInt(v,10); renderEstimate(); });
 setupPills(ve.veoPills,    v => { vs.veo = v; renderEstimate(); });
 setupPills(ve.ratioPills,  v => { vs.ratio = v; });
+setupPills(ve.stylePills,  v => { vs.style = v; });
 
 function clipCount(){ return Math.ceil(vs.totalSeconds / CLIP_SECONDS); }
 
@@ -1274,7 +1286,16 @@ async function callGeminiText(apiKey, prompt, image, jsonMode){
   return out;
 }
 
-function buildStoryPrompt(n, age, note, ratio){
+const VIDEO_STYLE_MAP = {
+  default: "bright, colorful 3D cartoon animation for children, soft lighting, rounded friendly shapes",
+  ghibli:  "Studio-Ghibli-inspired 2D hand-painted animation: soft watercolor-like backgrounds, gentle character design, lush nature detail, warm nostalgic lighting",
+  shonen:  "Shonen-anime-inspired 2D animation: bold vibrant colors, dynamic energetic movement, expressive characters, classic Japanese TV-anime look",
+  marvel:  "Western-superhero-cartoon-inspired animation: bold saturated colors, dynamic heroic poses and camera angles, comic-book-inspired lighting",
+  disney:  "Classic-Disney-inspired 3D animation: warm expressive characters, large friendly eyes, whimsical fairy-tale color palette and lighting",
+};
+
+function buildStoryPrompt(n, age, note, ratio, style){
+  const styleDesc = VIDEO_STYLE_MAP[style] || VIDEO_STYLE_MAP.default;
   return `You are a children's content producer. Look carefully at the attached image and build a complete short story for young children based on what you actually see in it.
 
 Requirements:
@@ -1283,7 +1304,8 @@ Requirements:
 - The story must have a clear beginning, middle and a happy, satisfying ending, plus one simple positive lesson.
 - Split the story into exactly ${n} consecutive scenes. Each scene becomes an 8-second animated video clip, so each scene must be one single continuous shot with simple, clear action.
 - Keep the main character's appearance IDENTICAL in every scene. In every single scene prompt, re-describe the character's full appearance in detail (colors, clothing, body shape, face) so the look stays consistent across clips.
-- Visual style: bright, colorful 3D cartoon animation for children, soft lighting, rounded friendly shapes. Repeat this style description in every scene prompt.
+- Visual style: ${styleDesc}. Repeat this style description in every scene prompt.
+- Do not depict any existing copyrighted character, logo, or trademark by name — only reinterpret the original subject actually visible in the photo, expressed purely in the spirit of the requested visual style.
 - Aspect ratio is ${ratio}.
 ${note ? '- Additional direction from the user: ' + note : ''}
 
@@ -1313,7 +1335,7 @@ ve.storyBtn.onclick = async () => {
   ve.storyBtn.textContent = 'กำลังวิเคราะห์รูปและแต่งเรื่อง…';
   try{
     const n = clipCount();
-    const raw = await callGeminiText(apiKey, buildStoryPrompt(n, vs.age, ve.note.value.trim(), vs.ratio), vs.image, true);
+    const raw = await callGeminiText(apiKey, buildStoryPrompt(n, vs.age, ve.note.value.trim(), vs.ratio, vs.style), vs.image, true);
     const cleaned = raw.replace(/^```json\s*/i,'').replace(/```$/,'').trim();
     const story = JSON.parse(cleaned);
     if (!story.scenes || !story.scenes.length) throw new Error('โมเดลไม่ได้ส่งฉากกลับมา');
