@@ -450,16 +450,18 @@ function setupSeg(segEl, onPick){
 setupSeg(els.complexitySeg, v => state.complexity = v);
 setupSeg(els.ratioSeg, v => state.ratio = v);
 
-function buildPrompt(description, complexity){
+function buildPrompt(description, complexity, aspectRatio){
   const map = {
     simple: "Very simple and bold: thick, smooth, continuous outlines only, minimal interior detail, large simple shapes, no fine linework, no cross-hatching, no texture — ideal for a young child (ages 3-6) to color easily.",
     medium: "Moderate detail: clear bold outlines with some simple interior linework to define features, balanced complexity — ideal for a child (ages 7-12).",
     detailed: "Rich, intricate detail: fine linework, decorative patterns and textures rendered purely as line art (in the spirit of a mandala or zentangle), many small enclosed areas to color — ideal for a teen or adult.",
   };
+  const ratioLabel = { '3:4': 'portrait (3:4)', '4:3': 'landscape (4:3)', '1:1': 'square (1:1)' }[aspectRatio] || aspectRatio;
   return `Create a single black-and-white coloring book page.
 Subject: ${description}
 Style requirement: ${map[complexity]}
-Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.`;
+Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.
+Image aspect ratio: ${ratioLabel}.`;
 }
 
 function showError(msg){
@@ -467,12 +469,7 @@ function showError(msg){
 }
 function clearError(){ els.errorBox.innerHTML = ''; }
 
-async function callGemini(apiKey, model, prompt, aspectRatio){
-  const supportsImageSize = model !== 'gemini-2.5-flash-image';
-  const imageConfig = supportsImageSize
-    ? { aspectRatio, imageSize: '2K' }
-    : { aspectRatio };
-
+async function callGemini(apiKey, model, prompt){
   const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -480,7 +477,6 @@ async function callGemini(apiKey, model, prompt, aspectRatio){
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         responseModalities: ['IMAGE'],
-        responseFormat: { image: imageConfig },
       },
     }),
   });
@@ -571,9 +567,9 @@ els.genBtn.onclick = async () => {
   els.currentPage.innerHTML = `<div class="spinner"></div>`;
 
   try{
-    const prompt = buildPrompt(description, state.complexity);
+    const prompt = buildPrompt(description, state.complexity, state.ratio);
     const model = els.model.value;
-    const result = await callGemini(apiKey, model, prompt, state.ratio);
+    const result = await callGemini(apiKey, model, prompt);
     const id = Date.now().toString(36);
     state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description });
     state.selectedId = id;
