@@ -5,82 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Coloring Pages — สร้างสมุดระบายสีด้วย AI</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EFEEEC;
-  --grid:#E6E5E2;
+  --bg:#F4F4F5;
+  --grid:#F0F0EF;
   --card:#FFFFFF;
-  --inset:#F1F1F0;
-  --inset-hover:#EAEAE8;
-  --ink:#111111;
-  --muted:#8B8B88;
-  --line:#E7E6E3;
+  --inset:#F4F4F5;
+  --inset-hover:#ECECED;
+  --ink:#0E0E10;
+  --muted:#8B8B90;
+  --line:#ECECEE;
   --danger:#C0392B;
   --danger-bg:#FBF0EE;
-  --r-card:30px;
-  --r-inset:22px;
-  --r-row:16px;
+  --repro:#0E0E10;
+  --repro-dark:#000000;
+  --repro-tint:#F0F0F1;
+  --r-card:28px;
+  --r-inset:18px;
+  --r-row:18px;
+  --r-btn:999px;
+  --shadow:0 10px 28px rgba(20,20,22,.08);
 }
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
   background-color:var(--bg);
-  background-image:repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 152px);
   color:var(--ink);
-  font-family:'IBM Plex Sans Thai','Inter',sans-serif;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
   font-size:15px;
   line-height:1.55;
   -webkit-font-smoothing:antialiased;
-  padding:clamp(24px,5vw,60px) clamp(14px,4vw,28px) 80px;
+  padding:clamp(20px,5vw,52px) clamp(14px,4vw,28px) 110px;
 }
 
-.shell{max-width:660px;margin:0 auto;}
+.shell{max-width:620px;margin:0 auto;}
 
 /* ---------- page heading ---------- */
-.masthead{text-align:center;margin-bottom:clamp(22px,4vw,34px);}
-.masthead h1{
-  font-family:'Playfair Display','Noto Serif Thai',serif;
-  font-weight:600;
-  font-size:clamp(30px,7vw,44px);
-  letter-spacing:-0.015em;
-  margin:0 0 6px;
-  line-height:1.15;
+.masthead{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:clamp(20px,4vw,28px);
 }
-.masthead p{margin:0;color:var(--muted);font-size:15px;}
+.masthead .avatar{
+  flex:0 0 auto;
+  width:46px;height:46px;
+  border-radius:50%;
+  background:var(--ink);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;
+}
+.eyebrow{
+  font-size:13px;
+  color:var(--muted);
+  margin:0 0 2px;
+}
+.masthead h1{
+  font-family:'Inter','Noto Sans Thai',sans-serif;
+  font-weight:700;
+  font-size:clamp(22px,5.5vw,27px);
+  letter-spacing:-0.01em;
+  margin:0;
+  line-height:1.25;
+}
+.masthead p{display:none;}
 
 /* ---------- cards ---------- */
 .card{
   background:var(--card);
+  border:none;
   border-radius:var(--r-card);
-  padding:clamp(18px,4vw,28px);
-  box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(0,0,0,.045);
-  margin-bottom:22px;
+  box-shadow:var(--shadow);
+  padding:clamp(20px,4vw,26px);
+  margin-bottom:16px;
+}
+.card-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:3px;
 }
 .card-title{
-  font-family:'Playfair Display','Noto Serif Thai',serif;
-  font-weight:600;
-  font-size:20px;
-  margin:0 0 3px;
+  font-weight:700;
+  font-size:17px;
+  margin:0;
+  letter-spacing:-0.01em;
 }
-.card-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;}
+.card-tag{
+  font-size:12px;
+  color:var(--muted);
+}
+.card-sub{color:var(--muted);font-size:13px;margin:5px 0 18px;}
 
-/* ---------- inset fields ---------- */
+/* ---------- inset fields (search-bar style) ---------- */
 .inset{
   background:var(--inset);
-  border-radius:var(--r-inset);
-  padding:16px 18px;
-  margin-bottom:14px;
+  border:none;
+  border-radius:20px;
+  padding:14px 18px;
+  margin-bottom:12px;
 }
 .inset > label{
   display:block;
-  font-size:12.5px;
+  font-size:12px;
   font-weight:500;
   color:var(--muted);
-  margin-bottom:7px;
+  margin-bottom:6px;
 }
 .inset input[type=password],
 .inset input[type=text],
@@ -89,215 +126,399 @@ body{
   width:100%;
   border:none;
   background:transparent;
-  font-family:inherit;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
   font-size:15px;
   color:var(--ink);
   padding:0;
   resize:none;
 }
-.inset textarea{min-height:66px;line-height:1.5;}
+.inset textarea{min-height:64px;line-height:1.5;}
 .inset input:focus,.inset textarea:focus,.inset select:focus{outline:none;}
-.inset:focus-within{box-shadow:inset 0 0 0 1.5px var(--ink);}
-.inset input::placeholder,.inset textarea::placeholder{color:#AFAFAC;}
+.inset:focus-within{box-shadow:0 0 0 2px var(--ink) inset;}
+.inset input::placeholder,.inset textarea::placeholder{color:#B0B0B5;}
 .inset select{appearance:none;cursor:pointer;}
+.inset select option{background:#fff;color:var(--ink);}
 .select-wrap{position:relative;}
 .select-wrap::after{
   content:'';
-  position:absolute;right:2px;top:6px;
-  width:8px;height:8px;
+  position:absolute;right:4px;top:6px;
+  width:7px;height:7px;
   border-right:1.6px solid var(--muted);
   border-bottom:1.6px solid var(--muted);
   transform:rotate(45deg);
   pointer-events:none;
 }
-.hint{font-size:12.5px;color:var(--muted);margin:10px 2px 18px;}
-.hint a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 2px 18px;}
+.hint a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;font-weight:600;}
 
 /* ---------- chips & pill groups ---------- */
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
 .chip{
-  font-family:inherit;
-  font-size:13px;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
+  font-size:12.5px;
   color:var(--ink);
-  background:var(--inset);
-  border:none;
+  background:#fff;
+  border:1.3px solid var(--line);
   border-radius:999px;
   padding:8px 15px;
   cursor:pointer;
-  transition:background .15s ease;
+  transition:border-color .15s ease,background .15s ease;
 }
-.chip:hover{background:var(--inset-hover);}
+.chip:hover{background:var(--inset-hover);border-color:#D8D8DC;}
 
-.group-label{font-size:12.5px;font-weight:500;color:var(--muted);margin:20px 2px 9px;}
-.pills{display:flex;gap:9px;}
+.group-label{
+  font-size:12.5px;
+  font-weight:500;
+  color:var(--muted);
+  margin:18px 2px 9px;
+}
+.pills{display:flex;gap:8px;flex-wrap:wrap;}
 .pills button{
   flex:1;
-  font-family:inherit;
-  font-size:13.5px;
-  padding:11px 8px;
-  border:1.5px solid var(--line);
-  background:var(--card);
+  min-width:64px;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  padding:10px 10px;
+  border:1.3px solid var(--line);
+  background:#fff;
   color:var(--ink);
   border-radius:999px;
   cursor:pointer;
   transition:all .15s ease;
 }
-.pills button:hover{border-color:#CFCECB;}
+.pills button:hover{border-color:#D8D8DC;}
 .pills button.active{background:var(--ink);border-color:var(--ink);color:#fff;}
 
 /* ---------- primary action ---------- */
 .primary{
   width:100%;
-  margin-top:24px;
+  margin-top:22px;
   padding:16px;
-  font-family:inherit;
-  font-size:15.5px;
-  font-weight:500;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
+  font-size:15px;
+  font-weight:600;
   background:var(--ink);
   color:#fff;
   border:none;
   border-radius:999px;
   cursor:pointer;
-  transition:opacity .15s ease;
+  transition:transform .12s ease,background .15s ease;
 }
-.primary:hover{opacity:.87;}
-.primary:disabled{background:#C5C4C1;cursor:not-allowed;opacity:1;}
+.primary:hover{background:var(--repro-dark);}
+.primary:active{transform:scale(.98);}
+.primary:disabled{background:#D3D2D6;cursor:not-allowed;}
 
 .error{
-  margin-top:16px;
+  margin-top:14px;
   background:var(--danger-bg);
   color:var(--danger);
-  border-radius:var(--r-row);
-  padding:13px 16px;
-  font-size:13px;
+  border-radius:16px;
+  padding:12px 16px;
+  font-size:12.5px;
   line-height:1.5;
   word-break:break-word;
 }
 
-/* ---------- preview ---------- */
+/* ---------- preview (hero photo card) ---------- */
 .canvas{
+  position:relative;
   background:var(--inset);
-  border-radius:var(--r-inset);
+  border:none;
+  border-radius:22px;
   aspect-ratio:3/4;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
-.canvas img{width:100%;height:100%;object-fit:contain;background:#fff;}
-.canvas .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:0 34px;}
-.canvas .empty .badge{
-  width:56px;height:56px;
-  background:var(--card);
-  border-radius:18px;
+.canvas img{width:100%;height:100%;object-fit:cover;background:#fff;}
+.canvas .cap{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:34px 18px 16px;
+  background:linear-gradient(to top, rgba(0,0,0,.68), rgba(0,0,0,0));
+  color:#fff;
+}
+.canvas .cap .cap-title{display:block;font-size:15px;font-weight:700;margin-bottom:2px;}
+.canvas .cap .cap-desc{display:block;font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fab{
+  position:absolute;top:14px;right:14px;
+  width:38px;height:38px;
+  border-radius:50%;
+  background:rgba(255,255,255,.92);
+  border:none;
   display:flex;align-items:center;justify-content:center;
-  margin:0 auto 14px;
+  cursor:pointer;
+  color:var(--ink);
+  box-shadow:0 3px 10px rgba(0,0,0,.15);
+}
+.fab:hover{background:#fff;}
+.canvas .empty{text-align:center;color:var(--muted);font-size:13px;padding:0 34px;}
+.canvas .empty .badge{
+  width:52px;height:52px;
+  background:#fff;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+  color:var(--ink);
+  box-shadow:var(--shadow);
 }
 
-/* progress row — mirrors the upload progress pattern */
-.progress-wrap{padding:4px 2px 0;}
-.progress-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:9px;}
-.track{height:5px;background:var(--inset);border-radius:999px;overflow:hidden;}
-.bar{height:100%;width:35%;background:var(--ink);border-radius:999px;animation:slide 1.3s ease-in-out infinite;}
+/* progress row */
+.progress-wrap{padding:2px 2px 0;}
+.progress-meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+.track{height:5px;background:#fff;border-radius:3px;overflow:hidden;}
+.fill{height:100%;width:35%;background:var(--ink);border-radius:3px;animation:slide 1.3s ease-in-out infinite;}
 @keyframes slide{
   0%{margin-left:0;width:22%;}
   50%{margin-left:45%;width:45%;}
   100%{margin-left:100%;width:22%;}
 }
 
-.row-actions{display:flex;gap:9px;}
+.row-actions{display:flex;gap:8px;}
 .ghost{
   flex:1;
-  font-family:inherit;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
   font-size:13.5px;
+  font-weight:500;
   padding:12px;
-  background:var(--card);
-  border:1.5px solid var(--line);
+  background:#fff;
+  border:1.3px solid var(--line);
   border-radius:999px;
   cursor:pointer;
   color:var(--ink);
   transition:all .15s ease;
 }
-.ghost:hover:not(:disabled){border-color:#CFCECB;}
-.ghost:disabled{color:#C5C4C1;cursor:not-allowed;}
+.ghost:hover:not(:disabled){border-color:#D8D8DC;background:var(--inset);}
+.ghost:disabled{color:#C7C6CA;cursor:not-allowed;}
 
-/* ---------- page list (file-row pattern) ---------- */
-.list{display:flex;flex-direction:column;gap:11px;}
+/* ---------- page list (photo-card row) ---------- */
+.list{display:flex;flex-direction:column;gap:10px;}
 .item{
   display:flex;
   align-items:center;
-  gap:14px;
-  border:1.5px solid var(--line);
-  border-radius:var(--r-row);
-  padding:12px 14px;
+  gap:12px;
+  border:1.3px solid var(--line);
+  border-radius:20px;
+  padding:9px 10px 9px 9px;
   cursor:pointer;
-  transition:border-color .15s ease;
+  transition:all .15s ease;
 }
-.item:hover{border-color:#CFCECB;}
-.item.active{border-color:var(--ink);}
+.item:hover{border-color:#D8D8DC;}
+.item.active{border-color:var(--ink);background:var(--repro-tint);}
 .item .kind{
   flex:0 0 auto;
   width:52px;height:52px;
-  background:var(--inset);
-  border-radius:12px;
+  background:#fff;
+  border:none;
+  border-radius:14px;
   overflow:hidden;
   display:flex;align-items:center;justify-content:center;
-  font-size:10.5px;
+  font-size:10px;
   letter-spacing:.05em;
   color:var(--muted);
 }
 .item .kind img{width:100%;height:100%;object-fit:cover;background:#fff;}
 .item .meta{flex:1;min-width:0;}
 .item .meta .name{
-  font-size:14.5px;
-  font-weight:500;
+  font-size:13.5px;
+  font-weight:600;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.item .meta .size{font-size:12.5px;color:var(--muted);}
+.item .meta .size{
+  font-size:12px;
+  color:var(--muted);
+}
 .icon-btn{
   flex:0 0 auto;
-  width:38px;height:38px;
-  border:none;background:transparent;
+  width:34px;height:34px;
+  border:none;background:var(--inset);
   border-radius:50%;
   cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   color:var(--ink);
   transition:background .15s ease;
 }
-.icon-btn:hover{background:var(--inset);}
+.icon-btn:hover{background:var(--inset-hover);}
 
 .empty-list{
   text-align:center;
   color:var(--muted);
-  font-size:13.5px;
+  font-size:13px;
   background:var(--inset);
+  border:none;
   border-radius:var(--r-inset);
-  padding:30px 24px;
+  padding:26px 22px;
 }
 
-.dots{display:flex;gap:7px;justify-content:center;padding:4px 0;}
-.dots i{width:5px;height:5px;border-radius:50%;background:#CFCECB;}
-
-/* ---------- footer bar ---------- */
-.bar{display:flex;gap:12px;margin-top:4px;}
-.bar .ghost{flex:1;}
-.bar .primary{flex:1.4;margin-top:0;}
+/* ---------- action row ---------- */
+.action-row{display:flex;gap:10px;margin-top:4px;}
+.action-row .ghost{flex:1;}
+.action-row .primary{flex:1.4;margin-top:0;}
 
 footer{
   text-align:center;
   color:var(--muted);
-  font-size:12px;
-  margin-top:34px;
+  font-size:11.5px;
+  margin-top:30px;
   line-height:1.7;
+}
+
+
+/* ---------- tabs: floating bottom capsule nav ---------- */
+.tabs{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%);
+  z-index:40;
+  display:flex;
+  gap:2px;
+  border:none;
+  border-radius:999px;
+  padding:5px;
+  background:var(--ink);
+  box-shadow:0 12px 30px rgba(0,0,0,.28);
+  width:min(92vw, 420px);
+}
+.tabs button{
+  flex:1;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
+  font-size:13.5px;
+  font-weight:500;
+  padding:12px 10px;
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,.62);
+  border-radius:999px;
+  cursor:pointer;
+  transition:all .15s ease;
+  white-space:nowrap;
+}
+.tabs button:hover{color:#fff;}
+.tabs button.active{background:#fff;color:var(--ink);}
+.panel[hidden]{display:none;}
+
+/* ---------- cost estimate ---------- */
+.estimate{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  border:none;
+  background:var(--inset);
+  border-radius:16px;
+  padding:13px 16px;
+  margin-top:16px;
+  font-size:12.5px;
+}
+.estimate .figures{font-weight:600;color:var(--ink);}
+.estimate .note{color:var(--muted);}
+
+.warn{
+  background:#FFF9E8;
+  border:none;
+  border-radius:var(--r-inset);
+  padding:13px 16px;
+  font-size:12.5px;
+  color:#6B5A22;
+  line-height:1.6;
+  margin-bottom:16px;
+}
+.warn strong{font-weight:600;}
+
+/* ---------- storyboard ---------- */
+.scene{
+  border:1.3px solid var(--line);
+  border-radius:18px;
+  padding:12px 14px;
+  margin-bottom:8px;
+}
+.scene-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.scene-no{
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  background:var(--ink);
+  border-radius:50%;
+  width:20px;height:20px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.scene-title{font-size:13.5px;font-weight:600;flex:1;min-width:0;}
+.scene-status{
+  font-size:11px;
+  font-weight:500;
+  color:var(--muted);
+}
+.scene-status.done{color:#2E8B57;}
+.scene-status.failed{color:var(--danger);}
+.scene-status.running{color:var(--ink);}
+.scene textarea{
+  width:100%;
+  border:none;
+  background:var(--inset);
+  border-radius:14px;
+  padding:11px 13px;
+  font-family:'Noto Sans Thai','Inter',sans-serif;
+  font-size:12.5px;
+  line-height:1.5;
+  color:var(--ink);
+  resize:vertical;
+  min-height:58px;
+}
+.scene textarea:focus{outline:none;border-color:var(--repro);box-shadow:0 0 0 2px var(--repro-tint);}
+.scene .narration{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:7px;
+  padding-left:10px;
+  border-left:2px solid var(--line);
+}
+
+.story-meta{
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--r-inset);
+  padding:14px 16px;
+  margin-bottom:14px;
+}
+.story-meta h3{margin:0 0 5px;font-size:15px;font-weight:600;}
+.story-meta p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+/* ---------- player ---------- */
+.player{
+  background:#000;
+  border:1px solid var(--line);
+  border-radius:var(--r-inset);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.player video{width:100%;display:block;background:#000;}
+.player-empty{
+  background:var(--inset);
+  border:1px dashed var(--line);
+  border-radius:var(--r-inset);
+  padding:34px 22px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:12px;
+}
+.now-playing{
+  display:flex;justify-content:space-between;gap:10px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-bottom:14px;padding:0 2px;
 }
 
 @media (max-width:520px){
   .pills{flex-wrap:wrap;}
-  .pills button{min-width:88px;}
-  .bar{flex-direction:column;}
+  .pills button{min-width:80px;}
+  .action-row{flex-direction:column;}
 }
 </style>
 </head>
@@ -306,26 +527,60 @@ footer{
 <div class="shell">
 
   <div class="masthead">
-    <h1>Coloring Pages</h1>
-    <p>พิมพ์คำอธิบาย แล้วรับภาพลายเส้นขาวดำพร้อมพิมพ์ระบายสี</p>
+    <div class="avatar">🖍️</div>
+    <div>
+      <p class="eyebrow">สวัสดี 👋</p>
+      <h1>Coloring &amp; Stories</h1>
+    </div>
   </div>
 
-  <!-- ===== compose ===== -->
+  <!-- ===== shared credentials ===== -->
   <section class="card">
-    <h2 class="card-title">สร้างหน้าใหม่</h2>
-    <p class="card-sub">อธิบายภาพที่ต้องการเป็นภาษาไทยหรืออังกฤษก็ได้</p>
+    <div class="card-head">
+      <h2 class="card-title">เชื่อมต่อ Gemini</h2>
+    </div>
+    <p class="card-sub">ใช้คีย์เดียวกันทั้งสองโหมด</p>
 
     <div class="inset">
       <label for="apiKey">Google Gemini API Key</label>
       <input type="password" id="apiKey" placeholder="วางคีย์ของคุณที่นี่">
     </div>
-    <p class="hint">ยังไม่มีคีย์? รับฟรีที่ <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> — คีย์เก็บอยู่ในเบราว์เซอร์ของคุณเท่านั้น และหายเมื่อรีเฟรชหน้า</p>
+    <p class="hint" style="margin-bottom:0;">ยังไม่มีคีย์? รับฟรีที่ <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> — คีย์เก็บอยู่ในเบราว์เซอร์ของคุณเท่านั้น และหายเมื่อรีเฟรชหน้า</p>
+  </section>
+
+  <!-- ===== tabs ===== -->
+  <div class="tabs" id="tabs">
+    <button data-panel="colorPanel" class="active">ภาพระบายสี</button>
+    <button data-panel="videoPanel">วีดีโอนิทานเด็ก</button>
+  </div>
+
+  <div class="panel" id="colorPanel">
+
+  <!-- ===== compose ===== -->
+  <section class="card">
+    <div class="card-head">
+      <h2 class="card-title">สร้างหน้าใหม่</h2>
+    </div>
+    <p class="card-sub">อธิบายภาพที่ต้องการเป็นภาษาไทยหรืออังกฤษก็ได้</p>
 
     <div class="inset">
       <label for="desc">อยากได้ภาพอะไร</label>
       <textarea id="desc" placeholder="เช่น ไดโนเสาร์ตัวใหญ่กำลังกินใบไม้อยู่ในป่า"></textarea>
     </div>
     <div class="chips" id="chips"></div>
+
+    <div class="inset" id="refBox">
+      <label for="refInput">รูปอ้างอิง (ไม่บังคับ)</label>
+      <div id="refEmpty">
+        <input type="file" id="refInput" accept="image/*" style="display:none;">
+        <button type="button" class="chip" id="refPickBtn">เลือกรูปภาพ</button>
+      </div>
+      <div id="refPreview" style="display:none;align-items:center;gap:12px;">
+        <img id="refThumb" alt="รูปอ้างอิง" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">
+        <div style="flex:1;font-size:12px;color:var(--muted);">AI จะใช้รูปนี้เป็นแรงบันดาลใจด้านท่าทาง/องค์ประกอบ แล้ววาดใหม่เป็นเส้นขาวดำ</div>
+        <button type="button" class="icon-btn" id="refRemoveBtn" title="ลบรูปอ้างอิง"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+      </div>
+    </div>
 
     <div class="group-label">ความละเอียดของเส้น</div>
     <div class="pills" id="complexityPills">
@@ -363,13 +618,15 @@ footer{
 
   <!-- ===== preview ===== -->
   <section class="card">
-    <h2 class="card-title">หน้าที่กำลังดู</h2>
+    <div class="card-head">
+      <h2 class="card-title">หน้าที่กำลังดู</h2>
+    </div>
     <p class="card-sub" id="previewSub">ยังไม่มีภาพในตอนนี้</p>
 
     <div class="canvas" id="canvas">
       <div class="empty">
         <div class="badge">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 16V8M12 8l-3 3M12 8l3 3"/>
             <path d="M20 16.5A3.5 3.5 0 0 0 17.5 10h-.9A6 6 0 1 0 6 15"/>
           </svg>
@@ -386,31 +643,150 @@ footer{
 
   <!-- ===== book ===== -->
   <section class="card">
-    <h2 class="card-title">หน้าทั้งหมดในเล่ม</h2>
+    <div class="card-head">
+      <h2 class="card-title">หน้าทั้งหมดในเล่ม</h2>
+    </div>
     <p class="card-sub" id="countSub">ยังไม่มีหน้าในเล่ม</p>
 
     <div class="list" id="list"></div>
 
-    <div class="bar" style="margin-top:20px;">
+    <div class="action-row" style="margin-top:18px;">
       <button class="ghost" id="clearBtn" disabled>ล้างทั้งเล่ม</button>
       <button class="primary" id="exportBtn" disabled>ส่งออกเป็น PDF</button>
     </div>
   </section>
 
+  </div><!-- /colorPanel -->
+
+  <div class="panel" id="videoPanel" hidden>
+
+    <!-- ===== source ===== -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">รูปตั้งต้น</h2>
+      </div>
+      <p class="card-sub">Gemini จะดูรูปนี้ แล้วแต่งเป็นนิทานสำหรับเด็ก</p>
+
+      <div class="warn">
+        <strong>ก่อนเริ่ม:</strong> การสร้างวีดีโอใช้โมเดล Veo ซึ่ง<strong>ไม่มีในโควตาฟรี</strong> ต้องเปิดบัญชีแบบเสียเงินของ Gemini API ก่อน · Veo สร้างได้ครั้งละ 8 วินาที ระบบจึงต้องสร้างหลายคลิปแล้วนำมาต่อกัน · ใช้เวลารวมค่อนข้างนาน โปรดเปิดหน้านี้ค้างไว้จนเสร็จ
+      </div>
+
+      <div class="inset" id="vidRefBox">
+        <label for="vidImageInput">รูปภาพ (จำเป็น)</label>
+        <div id="vidImgEmpty">
+          <input type="file" id="vidImageInput" accept="image/*" style="display:none;">
+          <button type="button" class="chip" id="vidImgPickBtn">เลือกรูปภาพ</button>
+        </div>
+        <div id="vidImgPreview" style="display:none;align-items:center;gap:12px;">
+          <img id="vidImgThumb" alt="รูปตั้งต้น" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">
+          <div style="flex:1;font-size:12px;color:var(--muted);">รูปนี้จะถูกใช้เป็นเฟรมแรกของคลิปเปิดเรื่องด้วย</div>
+          <button type="button" class="icon-btn" id="vidImgRemoveBtn" title="ลบรูป"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+        </div>
+      </div>
+
+      <div class="inset">
+        <label for="vidNote">อยากให้เล่าเรื่องแนวไหน (ไม่บังคับ)</label>
+        <textarea id="vidNote" placeholder="เช่น สอนเรื่องการแบ่งปันกับเพื่อน หรือ ผจญภัยหาสมบัติในป่า" style="min-height:52px;"></textarea>
+      </div>
+
+      <div class="group-label">อายุผู้ชม</div>
+      <div class="pills" id="agePills">
+        <button data-val="2-4" class="active">2–4 ขวบ</button>
+        <button data-val="5-7">5–7 ขวบ</button>
+        <button data-val="8-10">8–10 ขวบ</button>
+      </div>
+
+      <div class="group-label">ความยาวรวม</div>
+      <div class="pills" id="lengthPills">
+        <button data-val="32">32 วิ (ลองก่อน)</button>
+        <button data-val="60">1 นาที</button>
+        <button data-val="120">2 นาที</button>
+        <button data-val="180" class="active">3 นาที</button>
+      </div>
+
+      <div class="group-label">คุณภาพ / ราคา</div>
+      <div class="pills" id="veoPills">
+        <button data-val="lite" class="active">Lite — ถูกสุด</button>
+        <button data-val="fast">Fast — สมดุล</button>
+        <button data-val="standard">Standard — ดีสุด</button>
+      </div>
+
+      <div class="group-label">สัดส่วนวีดีโอ</div>
+      <div class="pills" id="vidRatioPills">
+        <button data-val="16:9" class="active">แนวนอน</button>
+        <button data-val="9:16">แนวตั้ง</button>
+      </div>
+
+      <div class="estimate">
+        <span class="figures" id="estFigures">—</span>
+        <span class="note" id="estNote">ราคาประมาณจากอัตราของ Google</span>
+      </div>
+
+      <button class="primary" id="storyBtn">วิเคราะห์รูปและสร้างโครงเรื่อง</button>
+      <div id="vidErrorBox"></div>
+    </section>
+
+    <!-- ===== storyboard ===== -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">โครงเรื่อง</h2>
+      </div>
+      <p class="card-sub" id="storySub">ยังไม่มีโครงเรื่อง — อัปโหลดรูปแล้วกดปุ่มด้านบน</p>
+
+      <div id="storyMeta"></div>
+      <div id="sceneList"></div>
+
+      <div class="action-row" style="margin-top:16px;">
+        <button class="ghost" id="clearStoryBtn" disabled>ล้างโครงเรื่อง</button>
+        <button class="primary" id="renderBtn" disabled>สร้างคลิปทั้งหมด</button>
+      </div>
+      <div id="renderProgress"></div>
+    </section>
+
+    <!-- ===== output ===== -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">วีดีโอที่ได้</h2>
+      </div>
+      <p class="card-sub" id="clipSub">ยังไม่มีคลิป</p>
+
+      <div class="player-empty" id="playerEmpty">คลิปที่สร้างเสร็จจะเล่นต่อกันที่นี่เป็นเรื่องเดียว</div>
+      <div class="player" id="playerBox" hidden>
+        <video id="player" controls playsinline></video>
+      </div>
+      <div class="now-playing" id="nowPlaying" hidden></div>
+
+      <div id="clipList"></div>
+
+      <div class="action-row" style="margin-top:16px;">
+        <button class="ghost" id="downloadAllBtn" disabled>ดาวน์โหลดทุกคลิป</button>
+        <button class="primary" id="mergeBtn" disabled>รวมเป็นไฟล์เดียว</button>
+      </div>
+      <p class="hint" style="margin-top:12px;margin-bottom:0;">การรวมไฟล์ทำในเครื่องคุณด้วย ffmpeg.wasm ใช้หน่วยความจำมาก ถ้าคลิปเยอะแนะนำให้ทำบนคอมพิวเตอร์ ถ้าไม่สำเร็จให้ดาวน์โหลดทีละคลิปแทน</p>
+    </section>
+
+  </div><!-- /videoPanel -->
+
   <footer>
-    ขับเคลื่อนด้วย Google Gemini API (Nano Banana)<br>
-    ภาพทั้งหมดสร้างในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่อื่น
+    ขับเคลื่อนด้วย Google Gemini API — Nano Banana (ภาพ) และ Veo (วีดีโอ)<br>
+    ไฟล์ทั้งหมดสร้างและเก็บในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่อื่น
   </footer>
 
 </div>
 
 <script>
-const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', count: 1, busy: false, progress: null };
+const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', count: 1, busy: false, progress: null, referenceImage: null };
 
 const els = {
   apiKey: document.getElementById('apiKey'),
   desc: document.getElementById('desc'),
   chips: document.getElementById('chips'),
+  refInput: document.getElementById('refInput'),
+  refPickBtn: document.getElementById('refPickBtn'),
+  refEmpty: document.getElementById('refEmpty'),
+  refPreview: document.getElementById('refPreview'),
+  refThumb: document.getElementById('refThumb'),
+  refRemoveBtn: document.getElementById('refRemoveBtn'),
   complexityPills: document.getElementById('complexityPills'),
   ratioPills: document.getElementById('ratioPills'),
   countPills: document.getElementById('countPills'),
@@ -428,8 +804,8 @@ const els = {
 };
 
 const ICON = {
-  trash: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>`,
-  down: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 12l5 5 5-5M5 20h14"/></svg>`,
+  trash: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>`,
+  down: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 12l5 5 5-5M5 20h14"/></svg>`,
 };
 
 const SUGGESTIONS = [
@@ -448,6 +824,43 @@ SUGGESTIONS.forEach(text => {
   b.onclick = () => { els.desc.value = text; els.desc.focus(); };
   els.chips.appendChild(b);
 });
+
+function readFileAsDataURL(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderReference(){
+  if (state.referenceImage){
+    els.refEmpty.style.display = 'none';
+    els.refPreview.style.display = 'flex';
+    els.refThumb.src = state.referenceImage.dataUrl;
+  } else {
+    els.refEmpty.style.display = 'block';
+    els.refPreview.style.display = 'none';
+    els.refThumb.src = '';
+  }
+}
+
+els.refPickBtn.onclick = () => els.refInput.click();
+els.refInput.onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')){ showError('ไฟล์ที่เลือกต้องเป็นรูปภาพเท่านั้น'); return; }
+  clearError();
+  const dataUrl = await readFileAsDataURL(file);
+  state.referenceImage = { dataUrl, base64: dataUrl.split(',')[1], mime: file.type };
+  renderReference();
+  els.refInput.value = '';
+};
+els.refRemoveBtn.onclick = () => {
+  state.referenceImage = null;
+  renderReference();
+};
 
 function setupPills(el, onPick){
   el.querySelectorAll('button').forEach(btn => {
@@ -474,7 +887,7 @@ const VARIATIONS = [
   "Compose it as a decorative arrangement, with the subject framed by border elements from its own world.",
 ];
 
-function buildPrompt(description, complexity, aspectRatio, variationIndex, total){
+function buildPrompt(description, complexity, aspectRatio, variationIndex, total, hasReference){
   const map = {
     simple: "Very simple and bold: thick, smooth, continuous outlines only, minimal interior detail, large simple shapes, no fine linework, no cross-hatching, no texture — ideal for a young child (ages 3-6) to color easily.",
     medium: "Moderate detail: clear bold outlines with some simple interior linework to define features, balanced complexity — ideal for a child (ages 7-12).",
@@ -484,22 +897,30 @@ function buildPrompt(description, complexity, aspectRatio, variationIndex, total
   const variation = total > 1
     ? `\nThis is variation ${variationIndex + 1} of ${total} for the same subject. ${VARIATIONS[variationIndex % VARIATIONS.length]} Make it clearly distinct from the other variations.`
     : '';
+  const referenceNote = hasReference
+    ? `\nA reference image is attached. Use it as inspiration for the subject's appearance, pose, and composition only — do not copy its colors, shading, or photographic style. Reinterpret it completely as pure black-and-white coloring-book line art following the strict rules below.`
+    : '';
   return `Create a single black-and-white coloring book page.
 Subject: ${description}
 Style requirement: ${map[complexity]}
 Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.
-Image aspect ratio: ${ratioLabel}.${variation}`;
+Image aspect ratio: ${ratioLabel}.${referenceNote}${variation}`;
 }
 
 function showError(msg){ els.errorBox.innerHTML = `<div class="error">${msg}</div>`; }
 function clearError(){ els.errorBox.innerHTML = ''; }
 
-async function callGemini(apiKey, model, prompt){
+async function callGemini(apiKey, model, prompt, referenceImage){
+  const reqParts = [{ text: prompt }];
+  if (referenceImage){
+    reqParts.push({ inlineData: { mimeType: referenceImage.mime, data: referenceImage.base64 } });
+  }
+
   const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: reqParts }],
       generationConfig: { responseModalities: ['IMAGE'] },
     }),
   });
@@ -526,7 +947,7 @@ function renderPreview(){
     const p = state.progress;
     const label = p && p.total > 1 ? `กำลังวาดภาพที่ ${p.current} จาก ${p.total}` : 'กำลังวาดภาพ';
     els.canvas.innerHTML = '';
-    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>${label}</span><span>อาจใช้เวลา 10–30 วินาทีต่อภาพ</span></div><div class="track"><div class="bar"></div></div></div>`;
+    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>${label}</span><span>อาจใช้เวลา 10–30 วินาทีต่อภาพ</span></div><div class="track"><div class="fill"></div></div></div>`;
     els.downloadBtn.disabled = true;
     els.removeBtn.disabled = true;
     return;
@@ -536,7 +957,7 @@ function renderPreview(){
   if (!page){
     els.canvas.innerHTML = `<div class="empty">
       <div class="badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 16V8M12 8l-3 3M12 8l3 3"/>
           <path d="M20 16.5A3.5 3.5 0 0 0 17.5 10h-.9A6 6 0 1 0 6 15"/>
         </svg>
@@ -549,9 +970,12 @@ function renderPreview(){
     return;
   }
 
-  els.canvas.innerHTML = `<img src="${page.dataUrl}" alt="${page.desc}">`;
   const idx = state.pages.findIndex(p => p.id === page.id) + 1;
-  els.previewSub.textContent = `หน้า ${idx} — ${page.desc}`;
+  els.canvas.innerHTML = `<img src="${page.dataUrl}" alt="${page.desc}">
+    <button class="fab" id="canvasDownloadFab" title="ดาวน์โหลด">${ICON.down}</button>
+    <div class="cap"><span class="cap-title">หน้า ${idx}</span><span class="cap-desc">${page.desc}</span></div>`;
+  document.getElementById('canvasDownloadFab').onclick = () => downloadPage(page);
+  els.previewSub.textContent = `${state.pages.length} หน้าในเล่มนี้`;
   els.downloadBtn.disabled = false;
   els.removeBtn.disabled = false;
 }
@@ -631,7 +1055,8 @@ els.genBtn.onclick = async () => {
 
     try{
       const result = await callGemini(apiKey, els.model.value,
-        buildPrompt(description, state.complexity, state.ratio, i, total));
+        buildPrompt(description, state.complexity, state.ratio, i, total, !!state.referenceImage),
+        state.referenceImage);
       const id = Date.now().toString(36) + i;
       state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description, ratio: state.ratio });
       state.selectedId = id;
@@ -695,8 +1120,483 @@ els.exportBtn.onclick = async () => {
 };
 
 applyRatioToCanvas();
+renderReference();
 renderPreview();
 renderList();
+
+/* ==========================================================
+   TAB SWITCHING
+   ========================================================== */
+document.querySelectorAll('#tabs button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+    document.getElementById(btn.dataset.panel).hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+});
+
+/* ==========================================================
+   VIDEO STUDIO
+   ========================================================== */
+const VEO = {
+  lite:     { id:'veo-3.1-lite-generate-preview', label:'Lite',     rate:0.05 },
+  fast:     { id:'veo-3.1-fast-generate-preview', label:'Fast',     rate:0.10 },
+  standard: { id:'veo-3.1-generate-preview',      label:'Standard', rate:0.40 },
+};
+const CLIP_SECONDS = 8;
+
+const vs = {
+  image: null,          // {dataUrl, base64, mime}
+  age: '2-4',
+  totalSeconds: 180,
+  veo: 'lite',
+  ratio: '16:9',
+  story: null,          // {title, summary, scenes:[{title, prompt, narration}]}
+  clips: [],            // {index, status, url, blob}
+  rendering: false,
+  playIndex: 0,
+};
+
+const ve = {
+  imgInput: document.getElementById('vidImageInput'),
+  imgPick: document.getElementById('vidImgPickBtn'),
+  imgEmpty: document.getElementById('vidImgEmpty'),
+  imgPreview: document.getElementById('vidImgPreview'),
+  imgThumb: document.getElementById('vidImgThumb'),
+  imgRemove: document.getElementById('vidImgRemoveBtn'),
+  note: document.getElementById('vidNote'),
+  agePills: document.getElementById('agePills'),
+  lengthPills: document.getElementById('lengthPills'),
+  veoPills: document.getElementById('veoPills'),
+  ratioPills: document.getElementById('vidRatioPills'),
+  estFigures: document.getElementById('estFigures'),
+  storyBtn: document.getElementById('storyBtn'),
+  errorBox: document.getElementById('vidErrorBox'),
+  storySub: document.getElementById('storySub'),
+  storyMeta: document.getElementById('storyMeta'),
+  sceneList: document.getElementById('sceneList'),
+  clearStoryBtn: document.getElementById('clearStoryBtn'),
+  renderBtn: document.getElementById('renderBtn'),
+  renderProgress: document.getElementById('renderProgress'),
+  clipSub: document.getElementById('clipSub'),
+  playerEmpty: document.getElementById('playerEmpty'),
+  playerBox: document.getElementById('playerBox'),
+  player: document.getElementById('player'),
+  nowPlaying: document.getElementById('nowPlaying'),
+  clipList: document.getElementById('clipList'),
+  downloadAllBtn: document.getElementById('downloadAllBtn'),
+  mergeBtn: document.getElementById('mergeBtn'),
+};
+
+function vidError(msg){ ve.errorBox.innerHTML = '<div class="error">' + msg + '</div>'; }
+function vidClearError(){ ve.errorBox.innerHTML = ''; }
+
+/* ---------- source image ---------- */
+function renderVidImage(){
+  if (vs.image){
+    ve.imgEmpty.style.display = 'none';
+    ve.imgPreview.style.display = 'flex';
+    ve.imgThumb.src = vs.image.dataUrl;
+  } else {
+    ve.imgEmpty.style.display = 'block';
+    ve.imgPreview.style.display = 'none';
+    ve.imgThumb.src = '';
+  }
+}
+ve.imgPick.onclick = () => ve.imgInput.click();
+ve.imgInput.onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')){ vidError('ไฟล์ที่เลือกต้องเป็นรูปภาพเท่านั้น'); return; }
+  vidClearError();
+  const dataUrl = await readFileAsDataURL(file);
+  vs.image = { dataUrl, base64: dataUrl.split(',')[1], mime: file.type };
+  renderVidImage();
+  ve.imgInput.value = '';
+};
+ve.imgRemove.onclick = () => { vs.image = null; renderVidImage(); };
+
+/* ---------- options ---------- */
+setupPills(ve.agePills,    v => { vs.age = v; });
+setupPills(ve.lengthPills, v => { vs.totalSeconds = parseInt(v,10); renderEstimate(); });
+setupPills(ve.veoPills,    v => { vs.veo = v; renderEstimate(); });
+setupPills(ve.ratioPills,  v => { vs.ratio = v; });
+
+function clipCount(){ return Math.ceil(vs.totalSeconds / CLIP_SECONDS); }
+
+function renderEstimate(){
+  const n = clipCount();
+  const secs = n * CLIP_SECONDS;
+  const cost = secs * VEO[vs.veo].rate;
+  const mins = Math.round(secs / 60 * 10) / 10;
+  ve.estFigures.textContent =
+    n + ' คลิป · ' + secs + ' วินาที (~' + mins + ' นาที) · ประมาณ $' + cost.toFixed(2) + ' USD';
+}
+
+/* ---------- step 1: analyse image + write story ---------- */
+async function callGeminiText(apiKey, prompt, image, jsonMode){
+  const parts = [{ text: prompt }];
+  if (image) parts.push({ inlineData: { mimeType: image.mime, data: image.base64 } });
+  const cfg = jsonMode ? { responseMimeType: 'application/json' } : {};
+
+  const res = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg }),
+  });
+  let data = null;
+  try { data = await res.json(); } catch(e){}
+  if (!res.ok) throw new Error(data?.error?.message || ('เรียก API ไม่สำเร็จ (HTTP ' + res.status + ')'));
+  const out = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+  if (!out) throw new Error('โมเดลไม่ได้ตอบกลับมา');
+  return out;
+}
+
+function buildStoryPrompt(n, age, note, ratio){
+  return `You are a children's content producer. Look carefully at the attached image and build a complete short story for young children based on what you actually see in it.
+
+Requirements:
+- Target audience: children aged ${age}. Keep everything gentle, warm and age-appropriate.
+- Absolutely no violence, no scary imagery, no danger to characters, no sad endings, no adult themes. Friendly and reassuring throughout.
+- The story must have a clear beginning, middle and a happy, satisfying ending, plus one simple positive lesson.
+- Split the story into exactly ${n} consecutive scenes. Each scene becomes an 8-second animated video clip, so each scene must be one single continuous shot with simple, clear action.
+- Keep the main character's appearance IDENTICAL in every scene. In every single scene prompt, re-describe the character's full appearance in detail (colors, clothing, body shape, face) so the look stays consistent across clips.
+- Visual style: bright, colorful 3D cartoon animation for children, soft lighting, rounded friendly shapes. Repeat this style description in every scene prompt.
+- Aspect ratio is ${ratio}.
+${note ? '- Additional direction from the user: ' + note : ''}
+
+Return ONLY valid JSON in exactly this shape, no markdown, no commentary:
+{
+  "title": "story title in Thai",
+  "summary": "2-3 sentence summary in Thai",
+  "lesson": "the positive lesson, one short sentence in Thai",
+  "scenes": [
+    {
+      "title": "short scene title in Thai",
+      "narration": "one or two sentences of Thai narration a parent would read aloud for this scene",
+      "prompt": "a detailed ENGLISH video generation prompt for this 8-second shot: full character description, setting, action, camera movement, lighting, and the cartoon style. Include gentle ambient sound cues. No on-screen text."
+    }
+  ]
+}
+The "scenes" array must contain exactly ${n} items.`;
+}
+
+ve.storyBtn.onclick = async () => {
+  vidClearError();
+  const apiKey = els.apiKey.value.trim();
+  if (!apiKey){ vidError('ใส่ Google Gemini API Key ก่อน'); return; }
+  if (!vs.image){ vidError('อัปโหลดรูปตั้งต้นก่อน'); return; }
+
+  ve.storyBtn.disabled = true;
+  ve.storyBtn.textContent = 'กำลังวิเคราะห์รูปและแต่งเรื่อง…';
+  try{
+    const n = clipCount();
+    const raw = await callGeminiText(apiKey, buildStoryPrompt(n, vs.age, ve.note.value.trim(), vs.ratio), vs.image, true);
+    const cleaned = raw.replace(/^```json\s*/i,'').replace(/```$/,'').trim();
+    const story = JSON.parse(cleaned);
+    if (!story.scenes || !story.scenes.length) throw new Error('โมเดลไม่ได้ส่งฉากกลับมา');
+    vs.story = story;
+    vs.clips = story.scenes.map((s,i) => ({ index:i, status:'pending', url:null, blob:null }));
+    renderStory();
+    renderClips();
+  }catch(err){
+    vidError('สร้างโครงเรื่องไม่สำเร็จ: ' + (err.message || 'ไม่ทราบสาเหตุ'));
+  }finally{
+    ve.storyBtn.disabled = false;
+    ve.storyBtn.textContent = 'วิเคราะห์รูปและสร้างโครงเรื่อง';
+  }
+};
+
+function renderStory(){
+  if (!vs.story){
+    ve.storySub.textContent = 'ยังไม่มีโครงเรื่อง — อัปโหลดรูปแล้วกดปุ่มด้านบน';
+    ve.storyMeta.innerHTML = '';
+    ve.sceneList.innerHTML = '';
+    ve.clearStoryBtn.disabled = true;
+    ve.renderBtn.disabled = true;
+    return;
+  }
+  const s = vs.story;
+  ve.storySub.textContent = s.scenes.length + ' ฉาก · แก้ไขคำสั่งของแต่ละฉากได้ก่อนสร้างจริง';
+  ve.storyMeta.innerHTML =
+    '<div class="story-meta"><h3>' + escapeHtml(s.title || 'ไม่มีชื่อเรื่อง') + '</h3>' +
+    '<p>' + escapeHtml(s.summary || '') + (s.lesson ? '<br><strong>ข้อคิด:</strong> ' + escapeHtml(s.lesson) : '') + '</p></div>';
+
+  ve.sceneList.innerHTML = '';
+  s.scenes.forEach((sc, i) => {
+    const clip = vs.clips[i] || { status:'pending' };
+    const div = document.createElement('div');
+    div.className = 'scene';
+    div.innerHTML =
+      '<div class="scene-head">' +
+        '<span class="scene-no">' + String(i+1).padStart(2,'0') + '</span>' +
+        '<span class="scene-title">' + escapeHtml(sc.title || ('ฉากที่ ' + (i+1))) + '</span>' +
+        '<span class="scene-status ' + statusClass(clip.status) + '">' + statusLabel(clip.status) + '</span>' +
+      '</div>' +
+      '<textarea data-scene="' + i + '">' + escapeHtml(sc.prompt || '') + '</textarea>' +
+      (sc.narration ? '<div class="narration">' + escapeHtml(sc.narration) + '</div>' : '');
+    div.querySelector('textarea').oninput = (e) => { vs.story.scenes[i].prompt = e.target.value; };
+    ve.sceneList.appendChild(div);
+  });
+
+  ve.clearStoryBtn.disabled = false;
+  ve.renderBtn.disabled = false;
+  ve.renderBtn.textContent = 'สร้างคลิปทั้งหมด (' + s.scenes.length + ' คลิป)';
+}
+
+function statusClass(s){
+  return s === 'done' ? 'done' : s === 'failed' ? 'failed' : s === 'running' ? 'running' : '';
+}
+function statusLabel(s){
+  return s === 'done' ? 'เสร็จ' : s === 'failed' ? 'ล้มเหลว' : s === 'running' ? 'กำลังสร้าง' : 'รอคิว';
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+ve.clearStoryBtn.onclick = () => {
+  vs.story = null;
+  vs.clips.forEach(c => { if (c.url) URL.revokeObjectURL(c.url); });
+  vs.clips = [];
+  renderStory();
+  renderClips();
+};
+
+/* ---------- step 2: Veo generation ---------- */
+async function veoGenerateClip(apiKey, modelId, prompt, ratio, firstFrame){
+  const instance = { prompt };
+  if (firstFrame){
+    instance.image = { inlineData: { mimeType: firstFrame.mime, data: firstFrame.base64 } };
+  }
+  const body = {
+    instances: [instance],
+    parameters: { aspectRatio: ratio, durationSeconds: '8', resolution: '720p' },
+  };
+
+  const start = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelId + ':predictLongRunning', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body),
+  });
+  let op = null;
+  try { op = await start.json(); } catch(e){}
+  if (!start.ok) throw new Error(op?.error?.message || ('เริ่มงานไม่สำเร็จ (HTTP ' + start.status + ')'));
+  if (!op?.name) throw new Error('ไม่ได้รับรหัสงานจาก API');
+
+  // poll until done (max ~10 minutes)
+  const deadline = Date.now() + 10 * 60 * 1000;
+  let status = op;
+  while (!status.done){
+    if (Date.now() > deadline) throw new Error('หมดเวลารอ (เกิน 10 นาที)');
+    await new Promise(r => setTimeout(r, 10000));
+    const poll = await fetch('https://generativelanguage.googleapis.com/v1beta/' + op.name, {
+      headers: { 'x-goog-api-key': apiKey },
+    });
+    status = await poll.json();
+    if (status.error) throw new Error(status.error.message || 'งานล้มเหลว');
+  }
+
+  const uri = status?.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri
+           || status?.response?.generatedVideos?.[0]?.video?.uri;
+  if (!uri) throw new Error('งานเสร็จแล้วแต่ไม่พบไฟล์วีดีโอ');
+
+  const dl = await fetch(uri, { headers: { 'x-goog-api-key': apiKey } });
+  if (!dl.ok) throw new Error('ดาวน์โหลดวีดีโอไม่สำเร็จ (HTTP ' + dl.status + ')');
+  return await dl.blob();
+}
+
+ve.renderBtn.onclick = async () => {
+  vidClearError();
+  const apiKey = els.apiKey.value.trim();
+  if (!apiKey){ vidError('ใส่ Google Gemini API Key ก่อน'); return; }
+  if (!vs.story) return;
+
+  vs.rendering = true;
+  ve.renderBtn.disabled = true;
+  ve.clearStoryBtn.disabled = true;
+  ve.storyBtn.disabled = true;
+
+  const modelId = VEO[vs.veo].id;
+  const scenes = vs.story.scenes;
+  let done = 0, failed = 0;
+
+  for (let i = 0; i < scenes.length; i++){
+    if (vs.clips[i].status === 'done'){ done++; continue; }
+    vs.clips[i].status = 'running';
+    renderStory();
+    ve.renderProgress.innerHTML =
+      '<div class="progress-wrap" style="margin-top:14px;"><div class="progress-meta">' +
+      '<span>กำลังสร้างคลิปที่ ' + (i+1) + ' จาก ' + scenes.length + '</span>' +
+      '<span>อาจใช้เวลา 1–3 นาทีต่อคลิป</span></div>' +
+      '<div class="track"><div class="fill"></div></div></div>';
+
+    try{
+      // first clip is seeded with the uploaded image so the story starts from it
+      const firstFrame = (i === 0) ? vs.image : null;
+      const blob = await veoGenerateClip(apiKey, modelId, scenes[i].prompt, vs.ratio, firstFrame);
+      vs.clips[i].blob = blob;
+      vs.clips[i].url = URL.createObjectURL(blob);
+      vs.clips[i].status = 'done';
+      done++;
+    }catch(err){
+      vs.clips[i].status = 'failed';
+      vs.clips[i].error = err.message || 'ไม่ทราบสาเหตุ';
+      failed++;
+    }
+    renderStory();
+    renderClips();
+  }
+
+  vs.rendering = false;
+  ve.renderProgress.innerHTML = '';
+  ve.renderBtn.disabled = false;
+  ve.clearStoryBtn.disabled = false;
+  ve.storyBtn.disabled = false;
+  ve.renderBtn.textContent = failed ? 'ลองสร้างคลิปที่ล้มเหลวอีกครั้ง' : 'สร้างคลิปทั้งหมด (' + scenes.length + ' คลิป)';
+
+  if (failed){
+    vidError('สร้างสำเร็จ ' + done + ' จาก ' + scenes.length + ' คลิป — กดปุ่มสร้างอีกครั้งเพื่อลองเฉพาะคลิปที่ล้มเหลว<br>' +
+      vs.clips.filter(c => c.status === 'failed').map(c => 'คลิปที่ ' + (c.index+1) + ': ' + escapeHtml(c.error || '')).join('<br>'));
+  }
+};
+
+/* ---------- step 3: output ---------- */
+function renderClips(){
+  const ready = vs.clips.filter(c => c.status === 'done');
+  ve.clipSub.textContent = ready.length
+    ? 'พร้อมแล้ว ' + ready.length + ' คลิป · รวม ~' + (ready.length * CLIP_SECONDS) + ' วินาที'
+    : 'ยังไม่มีคลิป';
+
+  ve.clipList.innerHTML = '';
+  vs.clips.forEach((c, i) => {
+    if (c.status !== 'done') return;
+    const sc = vs.story?.scenes?.[i] || {};
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.style.marginBottom = '8px';
+    item.innerHTML =
+      '<div class="kind">' + String(i+1).padStart(2,'0') + '</div>' +
+      '<div class="meta"><div class="name">' + escapeHtml(sc.title || ('ฉากที่ ' + (i+1))) + '</div>' +
+      '<div class="size">8 วินาที · MP4</div></div>' +
+      '<button class="icon-btn js-play" title="เล่นจากฉากนี้">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 4l12 8-12 8V4z"/></svg>' +
+      '</button>' +
+      '<button class="icon-btn js-dl" title="ดาวน์โหลด">' + ICON.down + '</button>';
+    item.querySelector('.js-play').onclick = () => playFrom(i);
+    item.querySelector('.js-dl').onclick = () => {
+      const a = document.createElement('a');
+      a.href = c.url;
+      a.download = 'scene-' + String(i+1).padStart(2,'0') + '.mp4';
+      a.click();
+    };
+    ve.clipList.appendChild(item);
+  });
+
+  ve.downloadAllBtn.disabled = ready.length === 0;
+  ve.mergeBtn.disabled = ready.length < 2;
+
+  if (ready.length && ve.playerBox.hidden) playFrom(vs.clips.findIndex(c => c.status === 'done'));
+}
+
+function playFrom(index){
+  const ready = vs.clips.filter(c => c.status === 'done');
+  if (!ready.length) return;
+  ve.playerEmpty.hidden = true;
+  ve.playerBox.hidden = false;
+  ve.nowPlaying.hidden = false;
+  vs.playIndex = index;
+  const clip = vs.clips[index];
+  if (!clip || clip.status !== 'done') return;
+  ve.player.src = clip.url;
+  ve.player.play().catch(()=>{});
+  updateNowPlaying();
+}
+
+function updateNowPlaying(){
+  const sc = vs.story?.scenes?.[vs.playIndex] || {};
+  const ready = vs.clips.filter(c => c.status === 'done').length;
+  ve.nowPlaying.innerHTML =
+    '<span>ฉาก ' + (vs.playIndex+1) + ' — ' + escapeHtml(sc.title || '') + '</span>' +
+    '<span>' + ready + ' คลิปในคิว</span>';
+}
+
+// auto-advance to the next finished clip so it plays as one story
+ve.player.addEventListener('ended', () => {
+  for (let i = vs.playIndex + 1; i < vs.clips.length; i++){
+    if (vs.clips[i].status === 'done'){ playFrom(i); return; }
+  }
+});
+
+ve.downloadAllBtn.onclick = () => {
+  vs.clips.forEach((c, i) => {
+    if (c.status !== 'done') return;
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = c.url;
+      a.download = 'scene-' + String(i+1).padStart(2,'0') + '.mp4';
+      a.click();
+    }, i * 400);
+  });
+};
+
+/* ---------- merge with ffmpeg.wasm ---------- */
+let ffmpegInstance = null;
+ve.mergeBtn.onclick = async () => {
+  const ready = vs.clips.filter(c => c.status === 'done');
+  if (ready.length < 2) return;
+  vidClearError();
+  ve.mergeBtn.disabled = true;
+  ve.mergeBtn.textContent = 'กำลังโหลดตัวรวมไฟล์…';
+
+  try{
+    if (!window.FFmpegWASM) throw new Error('โหลดไลบรารีรวมไฟล์ไม่สำเร็จ');
+    if (!ffmpegInstance){
+      const { FFmpeg } = window.FFmpegWASM;
+      ffmpegInstance = new FFmpeg();
+      await ffmpegInstance.load({
+        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+      });
+    }
+    const ff = ffmpegInstance;
+    ve.mergeBtn.textContent = 'กำลังรวมคลิป…';
+
+    const names = [];
+    for (let i = 0; i < vs.clips.length; i++){
+      const c = vs.clips[i];
+      if (c.status !== 'done') continue;
+      const name = 'c' + String(i).padStart(3,'0') + '.mp4';
+      await ff.writeFile(name, new Uint8Array(await c.blob.arrayBuffer()));
+      names.push(name);
+    }
+    const listTxt = names.map(n => "file '" + n + "'").join('\n');
+    await ff.writeFile('list.txt', new TextEncoder().encode(listTxt));
+    await ff.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','out.mp4']);
+
+    const data = await ff.readFile('out.mp4');
+    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (vs.story?.title ? vs.story.title.replace(/[\\/:*?"<>|]/g,'') : 'kids-story') + '.mp4';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }catch(err){
+    vidError('รวมไฟล์ไม่สำเร็จ: ' + (err.message || 'ไม่ทราบสาเหตุ') + ' — ลองใช้ปุ่ม "ดาวน์โหลดทุกคลิป" แล้วนำไปต่อในโปรแกรมตัดต่อแทน');
+  }finally{
+    ve.mergeBtn.disabled = false;
+    ve.mergeBtn.textContent = 'รวมเป็นไฟล์เดียว';
+  }
+};
+
+/* ---------- init video panel ---------- */
+renderVidImage();
+renderEstimate();
+renderStory();
+renderClips();
+
 </script>
 
 </body>
