@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>โรงพิมพ์ภาพระบายสี — สร้างสมุดระบายสีด้วย AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+
+:root{
+  --paper:#FBF7EF;
+  --paper-line:#E4DCC8;
+  --ink:#211F1D;
+  --ink-soft:#5B564C;
+  --cobalt:#3457D5;
+  --cobalt-dark:#2743AD;
+  --marigold:#F2A93B;
+  --card:#FFFFFF;
+  --danger:#C4432A;
+  --radius:14px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.label,.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+  font-size:11px;
+  color:var(--ink-soft);
+}
+
+h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+
+/* ---------- header ---------- */
+header.top{
+  padding:28px clamp(16px,4vw,48px) 20px;
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);
+}
+header.top .mark{
+  font-family:'Fraunces',serif;
+  font-weight:700;
+  font-size:26px;
+  letter-spacing:-0.01em;
+}
+header.top .mark span{color:var(--cobalt);}
+header.top .tagline{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--ink-soft);
+  letter-spacing:.04em;
+}
+
+/* ---------- layout ---------- */
+.layout{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:0;
+  min-height:calc(100vh - 90px);
+}
+@media (max-width:880px){
+  .layout{grid-template-columns:1fr;}
+}
+
+/* ---------- form panel ---------- */
+.panel{
+  padding:28px clamp(16px,3vw,32px) 40px;
+  background:var(--paper);
+}
+.field{margin-bottom:20px;}
+.field label{display:block;margin-bottom:7px;}
+textarea,input[type=text],input[type=password],select{
+  width:100%;
+  font-family:'Inter',sans-serif;
+  font-size:14.5px;
+  padding:11px 12px;
+  border:1.5px solid var(--ink);
+  border-radius:8px;
+  background:var(--card);
+  color:var(--ink);
+  resize:vertical;
+}
+textarea:focus,input:focus,select:focus{
+  outline:2.5px solid var(--cobalt);
+  outline-offset:1px;
+}
+textarea{min-height:88px;}
+
+.key-box{
+  border:1.5px dashed var(--paper-line);
+  border-radius:10px;
+  padding:14px 14px 12px;
+  margin-bottom:22px;
+  background:#F5F0E3;
+}
+.key-box a{color:var(--cobalt-dark);font-weight:600;}
+.key-box p{margin:8px 0 0;font-size:12.5px;color:var(--ink-soft);}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+.chip{
+  font-size:12px;
+  font-family:'IBM Plex Mono',monospace;
+  border:1px solid var(--ink);
+  border-radius:999px;
+  padding:5px 11px;
+  background:var(--card);
+  cursor:pointer;
+  transition:transform .12s ease,background .12s ease;
+}
+.chip:hover{background:var(--marigold);transform:translateY(-1px);}
+
+.seg{display:flex;gap:8px;flex-wrap:wrap;}
+.seg button{
+  flex:1;
+  min-width:90px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  padding:9px 6px;
+  border:1.5px solid var(--ink);
+  background:var(--card);
+  border-radius:8px;
+  cursor:pointer;
+  color:var(--ink);
+}
+.seg button.active{background:var(--ink);color:var(--paper);}
+
+.generate-btn{
+  width:100%;
+  margin-top:6px;
+  padding:15px;
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:16.5px;
+  background:var(--cobalt);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  box-shadow:0 3px 0 var(--cobalt-dark);
+  transition:transform .08s ease;
+}
+.generate-btn:active{transform:translateY(3px);box-shadow:none;}
+.generate-btn:disabled{background:#B9B4A6;box-shadow:0 3px 0 #9C978A;cursor:not-allowed;}
+
+.error-banner{
+  margin-top:14px;
+  border:1.5px solid var(--danger);
+  color:var(--danger);
+  background:#FBEAE5;
+  border-radius:8px;
+  padding:10px 12px;
+  font-size:13px;
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* ---------- perforation divider ---------- */
+.tear{
+  width:26px;
+  background-image:radial-gradient(circle,var(--paper) 3.5px,transparent 3.6px);
+  background-size:26px 20px;
+  background-position:center;
+  border-left:1px dashed var(--paper-line);
+  border-right:1px dashed var(--paper-line);
+}
+@media (max-width:880px){
+  .tear{width:100%;height:22px;background-size:20px 26px;border-left:none;border-right:none;border-top:1px dashed var(--paper-line);border-bottom:1px dashed var(--paper-line);}
+}
+
+/* ---------- preview / output ---------- */
+.stage{
+  background:
+    radial-gradient(var(--paper-line) 1px, transparent 1.2px) 0 0/16px 16px,
+    var(--card);
+  padding:clamp(20px,3vw,40px);
+  display:flex;
+  flex-direction:column;
+  gap:26px;
+}
+.stage-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;}
+.stage-head h2{font-size:22px;}
+
+.current-page{
+  border:2px solid var(--ink);
+  border-radius:10px;
+  background:#fff;
+  aspect-ratio:3/4;
+  max-width:520px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+.current-page img{width:100%;height:100%;object-fit:contain;}
+.current-page .placeholder{
+  text-align:center;
+  color:var(--ink-soft);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  padding:0 30px;
+}
+.current-page .spinner{
+  width:34px;height:34px;border:3px solid var(--paper-line);border-top-color:var(--cobalt);
+  border-radius:50%;animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.page-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.ghost-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:9px 14px;
+  border:1.5px solid var(--ink);
+  background:transparent;
+  border-radius:8px;
+  cursor:pointer;
+}
+.ghost-btn:hover{background:var(--ink);color:var(--paper);}
+.ghost-btn.danger{border-color:var(--danger);color:var(--danger);}
+.ghost-btn.danger:hover{background:var(--danger);color:#fff;}
+.ghost-btn:disabled{opacity:.4;cursor:not-allowed;}
+.ghost-btn:disabled:hover{background:transparent;color:var(--ink);}
+
+/* ---------- gallery ---------- */
+.gallery-wrap h3{font-size:15px;margin-bottom:12px;}
+.gallery{
+  display:flex;
+  gap:16px;
+  overflow-x:auto;
+  padding-bottom:10px;
+}
+.thumb{
+  flex:0 0 auto;
+  width:118px;
+  cursor:pointer;
+  position:relative;
+}
+.thumb .frame{
+  width:118px;height:150px;
+  border:1.5px solid var(--ink);
+  border-radius:8px;
+  overflow:hidden;
+  background:#fff;
+}
+.thumb.selected .frame{border-color:var(--cobalt);border-width:2.5px;}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.thumb .stamp{
+  position:absolute;top:6px;right:-6px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8.5px;
+  letter-spacing:.06em;
+  color:var(--marigold);
+  border:1.6px solid var(--marigold);
+  border-radius:50%;
+  width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;
+  transform:rotate(-12deg);
+  mix-blend-mode:multiply;
+  background:rgba(255,255,255,.5);
+  line-height:1.1;
+}
+.thumb .del{
+  position:absolute;bottom:-6px;left:-6px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--ink);color:var(--paper);
+  border:none;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ---------- export bar ---------- */
+.export-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;
+  border-top:2px solid var(--ink);
+  padding-top:18px;
+}
+.count-label{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+.export-btn{
+  font-family:'Fraunces',serif;font-weight:600;font-size:15px;
+  padding:12px 22px;background:var(--ink);color:var(--paper);
+  border:none;border-radius:9px;cursor:pointer;
+}
+.export-btn:disabled{background:#B9B4A6;cursor:not-allowed;}
+
+footer.foot{
+  text-align:center;
+  padding:20px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  border-top:1px dashed var(--paper-line);
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="mark">โรงพิมพ์ภาพ<span>ระบายสี</span></div>
+  <div class="tagline">พิมพ์คำอธิบาย → ได้ภาพลายเส้นขาวดำ พร้อมพิมพ์และระบายสี</div>
+</header>
+
+<div class="layout">
+
+  <!-- ===== control panel ===== -->
+  <section class="panel">
+    <div class="key-box">
+      <div class="label">Google Gemini API Key</div>
+      <div class="field" style="margin:8px 0 0;">
+        <input type="password" id="apiKey" placeholder="วางคีย์ API ของคุณที่นี่">
+      </div>
+      <p>ยังไม่มีคีย์? รับฟรีที่ <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a><br>
+      คีย์นี้เก็บไว้ในเบราว์เซอร์ชั่วคราวเท่านั้น (หายเมื่อรีเฟรชหน้า) ไม่ถูกส่งไปเก็บที่ใด</p>
+    </div>
+
+    <div class="field">
+      <label for="desc">อยากได้ภาพอะไร?</label>
+      <textarea id="desc" placeholder="เช่น ไดโนเสาร์ตัวใหญ่กำลังกินใบไม้อยู่ในป่า"></textarea>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="field">
+      <label>ความละเอียดของเส้น</label>
+      <div class="seg" id="complexitySeg">
+        <button data-val="simple">เด็กเล็ก</button>
+        <button data-val="medium" class="active">เด็กโต</button>
+        <button data-val="detailed">ผู้ใหญ่</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>สัดส่วนหน้ากระดาษ</label>
+      <div class="seg" id="ratioSeg">
+        <button data-val="3:4" class="active">แนวตั้ง</button>
+        <button data-val="4:3">แนวนอน</button>
+        <button data-val="1:1">จัตุรัส</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="model">โมเดล</label>
+      <select id="model">
+        <option value="gemini-3.1-flash-image">Nano Banana 2 — คุณภาพดี (แนะนำ)</option>
+        <option value="gemini-2.5-flash-image">Nano Banana — รุ่นเบา/เร็ว</option>
+      </select>
+    </div>
+
+    <button class="generate-btn" id="genBtn">วาดภาพระบายสี</button>
+    <div id="errorBox"></div>
+  </section>
+
+  <div class="tear"></div>
+
+  <!-- ===== stage / output ===== -->
+  <section class="stage">
+    <div class="stage-head">
+      <h2>หน้าที่กำลังดู</h2>
+    </div>
+
+    <div>
+      <div class="current-page" id="currentPage">
+        <div class="placeholder">ยังไม่มีภาพ — กรอกคำอธิบายด้านซ้าย<br>แล้วกด "วาดภาพระบายสี"</div>
+      </div>
+      <div class="page-actions">
+        <button class="ghost-btn" id="downloadBtn" disabled>ดาวน์โหลด PNG</button>
+        <button class="ghost-btn danger" id="removeBtn" disabled>ลบหน้านี้</button>
+      </div>
+    </div>
+
+    <div class="gallery-wrap">
+      <h3 class="label">หน้าทั้งหมดในเล่มนี้</h3>
+      <div class="gallery" id="gallery"></div>
+    </div>
+
+    <div class="export-bar">
+      <div class="count-label" id="countLabel">ยังไม่มีหน้าในเล่ม</div>
+      <button class="export-btn" id="exportBtn" disabled>ส่งออกทั้งเล่มเป็น PDF</button>
+    </div>
+  </section>
+
+</div>
+
+<footer class="foot">ขับเคลื่อนด้วย Google Gemini API (Nano Banana) — ภาพทั้งหมดสร้างขึ้นในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่อื่น</footer>
+
+<script>
+const state = {
+  pages: [],       // {id, dataUrl, mime, desc}
+  selectedId: null,
+  complexity: 'medium',
+  ratio: '3:4',
+};
+
+const els = {
+  apiKey: document.getElementById('apiKey'),
+  desc: document.getElementById('desc'),
+  chips: document.getElementById('chips'),
+  complexitySeg: document.getElementById('complexitySeg'),
+  ratioSeg: document.getElementById('ratioSeg'),
+  model: document.getElementById('model'),
+  genBtn: document.getElementById('genBtn'),
+  errorBox: document.getElementById('errorBox'),
+  currentPage: document.getElementById('currentPage'),
+  downloadBtn: document.getElementById('downloadBtn'),
+  removeBtn: document.getElementById('removeBtn'),
+  gallery: document.getElementById('gallery'),
+  countLabel: document.getElementById('countLabel'),
+  exportBtn: document.getElementById('exportBtn'),
+};
+
+const SUGGESTIONS = [
+  'ไดโนเสาร์กำลังกินใบไม้',
+  'ปราสาทเจ้าหญิงลอยอยู่กลางเมฆ',
+  'แมวใส่หมวกนักบินอวกาศ',
+  'ยานอวกาศบินผ่านดาวเคราะห์',
+  'ยูนิคอร์นวิ่งเล่นในทุ่งดอกไม้',
+  'รถแข่งกำลังเข้าโค้ง',
+];
+SUGGESTIONS.forEach(text => {
+  const b = document.createElement('button');
+  b.className = 'chip';
+  b.type = 'button';
+  b.textContent = text;
+  b.onclick = () => { els.desc.value = text; els.desc.focus(); };
+  els.chips.appendChild(b);
+});
+
+function setupSeg(segEl, onPick){
+  segEl.querySelectorAll('button').forEach(btn=>{
+    btn.onclick = () => {
+      segEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      onPick(btn.dataset.val);
+    };
+  });
+}
+setupSeg(els.complexitySeg, v => state.complexity = v);
+setupSeg(els.ratioSeg, v => state.ratio = v);
+
+function buildPrompt(description, complexity){
+  const map = {
+    simple: "Very simple and bold: thick, smooth, continuous outlines only, minimal interior detail, large simple shapes, no fine linework, no cross-hatching, no texture — ideal for a young child (ages 3-6) to color easily.",
+    medium: "Moderate detail: clear bold outlines with some simple interior linework to define features, balanced complexity — ideal for a child (ages 7-12).",
+    detailed: "Rich, intricate detail: fine linework, decorative patterns and textures rendered purely as line art (in the spirit of a mandala or zentangle), many small enclosed areas to color — ideal for a teen or adult.",
+  };
+  return `Create a single black-and-white coloring book page.
+Subject: ${description}
+Style requirement: ${map[complexity]}
+Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.`;
+}
+
+function showError(msg){
+  els.errorBox.innerHTML = `<div class="error-banner">${msg}</div>`;
+}
+function clearError(){ els.errorBox.innerHTML = ''; }
+
+async function callGemini(apiKey, model, prompt, aspectRatio){
+  const supportsImageSize = model !== 'gemini-2.5-flash-image';
+  const imageConfig = supportsImageSize
+    ? { aspectRatio, imageSize: '2K' }
+    : { aspectRatio };
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+        responseFormat: { image: imageConfig },
+      },
+    }),
+  });
+
+  let data;
+  try { data = await res.json(); } catch(e){ data = null; }
+
+  if (!res.ok){
+    const msg = data?.error?.message || `เกิดข้อผิดพลาด (HTTP ${res.status})`;
+    throw new Error(msg);
+  }
+
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  for (const part of parts){
+    const inline = part.inlineData || part.inline_data;
+    if (inline && inline.data){
+      const mime = inline.mimeType || inline.mime_type || 'image/png';
+      return { dataUrl: `data:${mime};base64,${inline.data}`, mime };
+    }
+  }
+  const finishReason = data?.candidates?.[0]?.finishReason;
+  const textPart = parts.find(p => p.text);
+  throw new Error(textPart?.text || `โมเดลไม่ได้ส่งภาพกลับมา (finishReason: ${finishReason || 'ไม่ทราบสาเหตุ'})`);
+}
+
+function renderCurrent(){
+  const page = state.pages.find(p => p.id === state.selectedId);
+  if (!page){
+    els.currentPage.innerHTML = `<div class="placeholder">ยังไม่มีภาพ — กรอกคำอธิบายด้านซ้าย<br>แล้วกด "วาดภาพระบายสี"</div>`;
+    els.downloadBtn.disabled = true;
+    els.removeBtn.disabled = true;
+    return;
+  }
+  els.currentPage.innerHTML = `<img src="${page.dataUrl}" alt="${page.desc}">`;
+  els.downloadBtn.disabled = false;
+  els.removeBtn.disabled = false;
+}
+
+function renderGallery(){
+  els.gallery.innerHTML = '';
+  state.pages.forEach((page, idx) => {
+    const div = document.createElement('div');
+    div.className = 'thumb' + (page.id === state.selectedId ? ' selected' : '');
+    div.innerHTML = `
+      <div class="frame"><img src="${page.dataUrl}" alt="หน้า ${idx+1}"></div>
+      <div class="stamp">อนุมัติ<br>#${idx+1}</div>
+      <button class="del" title="ลบหน้านี้">×</button>
+    `;
+    div.querySelector('.frame').onclick = () => { state.selectedId = page.id; renderCurrent(); renderGallery(); };
+    div.querySelector('.del').onclick = (e) => { e.stopPropagation(); removePage(page.id); };
+    els.gallery.appendChild(div);
+  });
+  els.countLabel.textContent = state.pages.length
+    ? `มีทั้งหมด ${state.pages.length} หน้าในเล่มนี้`
+    : 'ยังไม่มีหน้าในเล่ม';
+  els.exportBtn.disabled = state.pages.length === 0;
+}
+
+function removePage(id){
+  state.pages = state.pages.filter(p => p.id !== id);
+  if (state.selectedId === id){
+    state.selectedId = state.pages.length ? state.pages[state.pages.length-1].id : null;
+  }
+  renderCurrent();
+  renderGallery();
+}
+
+els.removeBtn.onclick = () => { if (state.selectedId) removePage(state.selectedId); };
+
+els.downloadBtn.onclick = () => {
+  const page = state.pages.find(p => p.id === state.selectedId);
+  if (!page) return;
+  const a = document.createElement('a');
+  a.href = page.dataUrl;
+  a.download = `coloring-page-${page.id}.png`;
+  a.click();
+};
+
+els.genBtn.onclick = async () => {
+  clearError();
+  const apiKey = els.apiKey.value.trim();
+  const description = els.desc.value.trim();
+  if (!apiKey){ showError('กรุณาใส่ Google Gemini API Key ก่อน'); return; }
+  if (!description){ showError('กรุณาอธิบายภาพที่ต้องการก่อน'); return; }
+
+  els.genBtn.disabled = true;
+  els.genBtn.textContent = 'กำลังวาด...';
+  els.currentPage.innerHTML = `<div class="spinner"></div>`;
+
+  try{
+    const prompt = buildPrompt(description, state.complexity);
+    const model = els.model.value;
+    const result = await callGemini(apiKey, model, prompt, state.ratio);
+    const id = Date.now().toString(36);
+    state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description });
+    state.selectedId = id;
+    renderCurrent();
+    renderGallery();
+  }catch(err){
+    showError(err.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ');
+    renderCurrent();
+  }finally{
+    els.genBtn.disabled = false;
+    els.genBtn.textContent = 'วาดภาพระบายสี';
+  }
+};
+
+function loadImage(src){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+els.exportBtn.onclick = async () => {
+  if (!state.pages.length) return;
+  els.exportBtn.disabled = true;
+  els.exportBtn.textContent = 'กำลังรวมเล่ม...';
+  try{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = 210, pageH = 297, margin = 10;
+    const maxW = pageW - margin*2, maxH = pageH - margin*2;
+
+    for (let i = 0; i < state.pages.length; i++){
+      const page = state.pages[i];
+      if (i > 0) pdf.addPage();
+      const img = await loadImage(page.dataUrl);
+      const aspect = img.naturalWidth / img.naturalHeight;
+      let drawW = maxW, drawH = maxW / aspect;
+      if (drawH > maxH){ drawH = maxH; drawW = maxH * aspect; }
+      const x = (pageW - drawW) / 2;
+      const y = (pageH - drawH) / 2;
+      const format = page.mime.includes('jpeg') ? 'JPEG' : 'PNG';
+      pdf.addImage(page.dataUrl, format, x, y, drawW, drawH);
+    }
+    pdf.save('สมุดระบายสีของฉัน.pdf');
+  }catch(err){
+    showError('ส่งออก PDF ไม่สำเร็จ: ' + (err.message || ''));
+  }finally{
+    els.exportBtn.disabled = false;
+    els.exportBtn.textContent = 'ส่งออกทั้งเล่มเป็น PDF';
+  }
+};
+
+renderCurrent();
+renderGallery();
+</script>
+
+</body>
+</html>
