@@ -7,22 +7,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EFEEEC;
-  --grid:#E6E5E2;
-  --card:#FFFFFF;
-  --inset:#F1F1F0;
-  --inset-hover:#EAEAE8;
-  --ink:#111111;
-  --muted:#8B8B88;
-  --line:#E7E6E3;
-  --danger:#C0392B;
-  --danger-bg:#FBF0EE;
+  --bg:#121212;
+  --grid:rgba(255,255,255,.035);
+  --card:#1B1B1A;
+  --inset:#141413;
+  --inset-hover:#1E1E1C;
+  --ink:#F2F0EA;
+  --muted:#8F8C85;
+  --line:#2C2B28;
+  --line-hover:#3D3B37;
+  --accent:#7C6CFF;
+  --accent-dark:#6656E0;
+  --danger:#FF6B5E;
+  --danger-bg:rgba(255,107,94,.12);
   --r-card:30px;
   --r-inset:22px;
   --r-row:16px;
+  --rainbow:linear-gradient(100deg,#FF5F6D 0%,#FFC65C 26%,#4FD1C5 52%,#6C7BFF 76%,#C97BFF 100%);
 }
 
 *{box-sizing:border-box;}
@@ -42,10 +46,24 @@ body{
 
 /* ---------- page heading ---------- */
 .masthead{text-align:center;margin-bottom:clamp(22px,4vw,34px);}
+.logo-mark{
+  width:44px;height:44px;
+  margin:0 auto 16px;
+  border-radius:13px;
+  background:var(--ink);
+  position:relative;
+  overflow:hidden;
+}
+.logo-mark::before{
+  content:'';
+  position:absolute;inset:0;
+  background:var(--rainbow);
+  clip-path:polygon(14% 0%,26% 100%,38% 0%,50% 100%,62% 0%,74% 100%,86% 0%,98% 100%,100% 100%,100% 0%);
+}
 .masthead h1{
-  font-family:'Playfair Display','Noto Serif Thai',serif;
-  font-weight:600;
-  font-size:clamp(30px,7vw,44px);
+  font-family:'Space Grotesk','Noto Sans Thai',sans-serif;
+  font-weight:700;
+  font-size:clamp(28px,7vw,40px);
   letter-spacing:-0.015em;
   margin:0 0 6px;
   line-height:1.15;
@@ -55,22 +73,34 @@ body{
 /* ---------- cards ---------- */
 .card{
   background:var(--card);
+  border:1px solid var(--line);
   border-radius:var(--r-card);
   padding:clamp(18px,4vw,28px);
-  box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(0,0,0,.045);
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset,0 20px 40px rgba(0,0,0,.35);
   margin-bottom:22px;
 }
 .card-title{
-  font-family:'Playfair Display','Noto Serif Thai',serif;
+  font-family:'Space Grotesk','Noto Sans Thai',sans-serif;
   font-weight:600;
-  font-size:20px;
+  font-size:19px;
   margin:0 0 3px;
+  position:relative;
+  display:inline-block;
+  padding-bottom:9px;
 }
-.card-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;}
+.card-title::after{
+  content:'';
+  position:absolute;left:0;bottom:0;
+  width:30px;height:3px;
+  border-radius:3px;
+  background:var(--rainbow);
+}
+.card-sub{color:var(--muted);font-size:13.5px;margin:14px 0 20px;}
 
 /* ---------- inset fields ---------- */
 .inset{
   background:var(--inset);
+  border:1px solid var(--line);
   border-radius:var(--r-inset);
   padding:16px 18px;
   margin-bottom:14px;
@@ -97,9 +127,10 @@ body{
 }
 .inset textarea{min-height:66px;line-height:1.5;}
 .inset input:focus,.inset textarea:focus,.inset select:focus{outline:none;}
-.inset:focus-within{box-shadow:inset 0 0 0 1.5px var(--ink);}
-.inset input::placeholder,.inset textarea::placeholder{color:#AFAFAC;}
+.inset:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,108,255,.18);}
+.inset input::placeholder,.inset textarea::placeholder{color:#5C5A55;}
 .inset select{appearance:none;cursor:pointer;}
+.inset select option{background:#1B1B1A;color:var(--ink);}
 .select-wrap{position:relative;}
 .select-wrap::after{
   content:'';
@@ -120,13 +151,13 @@ body{
   font-size:13px;
   color:var(--ink);
   background:var(--inset);
-  border:none;
+  border:1px solid var(--line);
   border-radius:999px;
   padding:8px 15px;
   cursor:pointer;
-  transition:background .15s ease;
+  transition:border-color .15s ease,background .15s ease;
 }
-.chip:hover{background:var(--inset-hover);}
+.chip:hover{background:var(--inset-hover);border-color:var(--line-hover);}
 
 .group-label{font-size:12.5px;font-weight:500;color:var(--muted);margin:20px 2px 9px;}
 .pills{display:flex;gap:9px;}
@@ -136,32 +167,43 @@ body{
   font-size:13.5px;
   padding:11px 8px;
   border:1.5px solid var(--line);
-  background:var(--card);
+  background:transparent;
   color:var(--ink);
   border-radius:999px;
   cursor:pointer;
   transition:all .15s ease;
 }
-.pills button:hover{border-color:#CFCECB;}
-.pills button.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.pills button:hover{border-color:var(--line-hover);}
+.pills button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 
-/* ---------- primary action ---------- */
+/* ---------- primary action (scratch reveal) ---------- */
 .primary{
+  position:relative;
+  overflow:hidden;
   width:100%;
   margin-top:24px;
   padding:16px;
   font-family:inherit;
   font-size:15.5px;
-  font-weight:500;
+  font-weight:600;
   background:var(--ink);
-  color:#fff;
+  color:#141413;
   border:none;
   border-radius:999px;
   cursor:pointer;
-  transition:opacity .15s ease;
 }
-.primary:hover{opacity:.87;}
-.primary:disabled{background:#C5C4C1;cursor:not-allowed;opacity:1;}
+.primary span{position:relative;z-index:1;}
+.primary::before{
+  content:'';
+  position:absolute;inset:0;
+  background:var(--rainbow);
+  clip-path:polygon(8% 0%,18% 100%,28% 0%,38% 100%,48% 0%,58% 100%,68% 0%,78% 100%,88% 0%,98% 100%,100% 100%,100% 0%);
+  opacity:0;
+  transition:opacity .3s ease;
+}
+.primary:hover::before,.primary:focus-visible::before{opacity:1;}
+.primary:disabled{background:#3A3937;color:#7A7873;cursor:not-allowed;}
+.primary:disabled::before{display:none;}
 
 .error{
   margin-top:16px;
@@ -177,6 +219,7 @@ body{
 /* ---------- preview ---------- */
 .canvas{
   background:var(--inset);
+  border:1px solid var(--line);
   border-radius:var(--r-inset);
   aspect-ratio:3/4;
   display:flex;
@@ -190,16 +233,17 @@ body{
 .canvas .empty .badge{
   width:56px;height:56px;
   background:var(--card);
+  border:1px solid var(--line);
   border-radius:18px;
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 14px;
 }
 
-/* progress row — mirrors the upload progress pattern */
-.progress-wrap{padding:4px 2px 0;}
-.progress-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:9px;}
-.track{height:5px;background:var(--inset);border-radius:999px;overflow:hidden;}
-.bar{height:100%;width:35%;background:var(--ink);border-radius:999px;animation:slide 1.3s ease-in-out infinite;}
+/* progress row */
+.progress-wrap{padding:4px 2px 0;width:100%;}
+.progress-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:9px;padding:0 4px;}
+.track{height:6px;background:#0D0D0C;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:0 4px;}
+.fill{height:100%;width:35%;background:var(--rainbow);border-radius:999px;animation:slide 1.3s ease-in-out infinite;}
 @keyframes slide{
   0%{margin-left:0;width:22%;}
   50%{margin-left:45%;width:45%;}
@@ -212,15 +256,15 @@ body{
   font-family:inherit;
   font-size:13.5px;
   padding:12px;
-  background:var(--card);
+  background:transparent;
   border:1.5px solid var(--line);
   border-radius:999px;
   cursor:pointer;
   color:var(--ink);
   transition:all .15s ease;
 }
-.ghost:hover:not(:disabled){border-color:#CFCECB;}
-.ghost:disabled{color:#C5C4C1;cursor:not-allowed;}
+.ghost:hover:not(:disabled){border-color:var(--line-hover);}
+.ghost:disabled{color:#5C5A55;cursor:not-allowed;}
 
 /* ---------- page list (file-row pattern) ---------- */
 .list{display:flex;flex-direction:column;gap:11px;}
@@ -234,8 +278,8 @@ body{
   cursor:pointer;
   transition:border-color .15s ease;
 }
-.item:hover{border-color:#CFCECB;}
-.item.active{border-color:var(--ink);}
+.item:hover{border-color:var(--line-hover);}
+.item.active{border-color:var(--accent);}
 .item .kind{
   flex:0 0 auto;
   width:52px;height:52px;
@@ -267,24 +311,22 @@ body{
   color:var(--ink);
   transition:background .15s ease;
 }
-.icon-btn:hover{background:var(--inset);}
+.icon-btn:hover{background:var(--inset-hover);}
 
 .empty-list{
   text-align:center;
   color:var(--muted);
   font-size:13.5px;
   background:var(--inset);
+  border:1px solid var(--line);
   border-radius:var(--r-inset);
   padding:30px 24px;
 }
 
-.dots{display:flex;gap:7px;justify-content:center;padding:4px 0;}
-.dots i{width:5px;height:5px;border-radius:50%;background:#CFCECB;}
-
-/* ---------- footer bar ---------- */
-.bar{display:flex;gap:12px;margin-top:4px;}
-.bar .ghost{flex:1;}
-.bar .primary{flex:1.4;margin-top:0;}
+/* ---------- action row ---------- */
+.action-row{display:flex;gap:12px;margin-top:4px;}
+.action-row .ghost{flex:1;}
+.action-row .primary{flex:1.4;margin-top:0;}
 
 footer{
   text-align:center;
@@ -297,7 +339,7 @@ footer{
 @media (max-width:520px){
   .pills{flex-wrap:wrap;}
   .pills button{min-width:88px;}
-  .bar{flex-direction:column;}
+  .action-row{flex-direction:column;}
 }
 </style>
 </head>
@@ -306,6 +348,7 @@ footer{
 <div class="shell">
 
   <div class="masthead">
+    <div class="logo-mark"></div>
     <h1>Coloring Pages</h1>
     <p>พิมพ์คำอธิบาย แล้วรับภาพลายเส้นขาวดำพร้อมพิมพ์ระบายสี</p>
   </div>
@@ -357,7 +400,7 @@ footer{
       </select>
     </div>
 
-    <button class="primary" id="genBtn">วาดภาพระบายสี</button>
+    <button class="primary" id="genBtn"><span>วาดภาพระบายสี</span></button>
     <div id="errorBox"></div>
   </section>
 
@@ -369,7 +412,7 @@ footer{
     <div class="canvas" id="canvas">
       <div class="empty">
         <div class="badge">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 16V8M12 8l-3 3M12 8l3 3"/>
             <path d="M20 16.5A3.5 3.5 0 0 0 17.5 10h-.9A6 6 0 1 0 6 15"/>
           </svg>
@@ -391,9 +434,9 @@ footer{
 
     <div class="list" id="list"></div>
 
-    <div class="bar" style="margin-top:20px;">
+    <div class="action-row" style="margin-top:20px;">
       <button class="ghost" id="clearBtn" disabled>ล้างทั้งเล่ม</button>
-      <button class="primary" id="exportBtn" disabled>ส่งออกเป็น PDF</button>
+      <button class="primary" id="exportBtn" disabled><span>ส่งออกเป็น PDF</span></button>
     </div>
   </section>
 
@@ -526,7 +569,7 @@ function renderPreview(){
     const p = state.progress;
     const label = p && p.total > 1 ? `กำลังวาดภาพที่ ${p.current} จาก ${p.total}` : 'กำลังวาดภาพ';
     els.canvas.innerHTML = '';
-    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>${label}</span><span>อาจใช้เวลา 10–30 วินาทีต่อภาพ</span></div><div class="track"><div class="bar"></div></div></div>`;
+    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>${label}</span><span>อาจใช้เวลา 10–30 วินาทีต่อภาพ</span></div><div class="track"><div class="fill"></div></div></div>`;
     els.downloadBtn.disabled = true;
     els.removeBtn.disabled = true;
     return;
@@ -536,7 +579,7 @@ function renderPreview(){
   if (!page){
     els.canvas.innerHTML = `<div class="empty">
       <div class="badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 16V8M12 8l-3 3M12 8l3 3"/>
           <path d="M20 16.5A3.5 3.5 0 0 0 17.5 10h-.9A6 6 0 1 0 6 15"/>
         </svg>
@@ -626,7 +669,7 @@ els.genBtn.onclick = async () => {
 
   for (let i = 0; i < total; i++){
     state.progress = { current: i + 1, total };
-    els.genBtn.textContent = total > 1 ? `กำลังวาด ${i+1}/${total}…` : 'กำลังวาด…';
+    els.genBtn.innerHTML = `<span>${total > 1 ? `กำลังวาด ${i+1}/${total}…` : 'กำลังวาด…'}</span>`;
     renderPreview();
 
     try{
@@ -645,7 +688,7 @@ els.genBtn.onclick = async () => {
   state.busy = false;
   state.progress = null;
   els.genBtn.disabled = false;
-  els.genBtn.textContent = 'วาดภาพระบายสี';
+  els.genBtn.innerHTML = `<span>วาดภาพระบายสี</span>`;
   renderPreview();
   renderList();
 
@@ -668,7 +711,7 @@ function loadImage(src){
 els.exportBtn.onclick = async () => {
   if (!state.pages.length) return;
   els.exportBtn.disabled = true;
-  els.exportBtn.textContent = 'กำลังรวมเล่ม…';
+  els.exportBtn.innerHTML = `<span>กำลังรวมเล่ม…</span>`;
   try{
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit:'mm', format:'a4' });
@@ -690,7 +733,7 @@ els.exportBtn.onclick = async () => {
     showError('ส่งออก PDF ไม่สำเร็จ: ' + (err.message || ''));
   }finally{
     els.exportBtn.disabled = false;
-    els.exportBtn.textContent = 'ส่งออกเป็น PDF';
+    els.exportBtn.innerHTML = `<span>ส่งออกเป็น PDF</span>`;
   }
 };
 
