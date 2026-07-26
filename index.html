@@ -341,6 +341,14 @@ footer{
       <button data-val="1:1">จัตุรัส</button>
     </div>
 
+    <div class="group-label">จำนวนภาพที่สุ่มต่อ 1 คำสั่ง</div>
+    <div class="pills" id="countPills">
+      <button data-val="1" class="active">1 ภาพ</button>
+      <button data-val="2">2 ภาพ</button>
+      <button data-val="3">3 ภาพ</button>
+      <button data-val="4">4 ภาพ</button>
+    </div>
+
     <div class="group-label">โมเดล</div>
     <div class="inset select-wrap">
       <select id="model">
@@ -397,7 +405,7 @@ footer{
 </div>
 
 <script>
-const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', busy: false };
+const state = { pages: [], selectedId: null, complexity: 'medium', ratio: '3:4', count: 1, busy: false, progress: null };
 
 const els = {
   apiKey: document.getElementById('apiKey'),
@@ -405,6 +413,7 @@ const els = {
   chips: document.getElementById('chips'),
   complexityPills: document.getElementById('complexityPills'),
   ratioPills: document.getElementById('ratioPills'),
+  countPills: document.getElementById('countPills'),
   model: document.getElementById('model'),
   genBtn: document.getElementById('genBtn'),
   errorBox: document.getElementById('errorBox'),
@@ -451,24 +460,35 @@ function setupPills(el, onPick){
 }
 setupPills(els.complexityPills, v => state.complexity = v);
 setupPills(els.ratioPills, v => { state.ratio = v; applyRatioToCanvas(); });
+setupPills(els.countPills, v => state.count = parseInt(v, 10));
 
 function applyRatioToCanvas(){
   const map = { '3:4':'3/4', '4:3':'4/3', '1:1':'1/1' };
   els.canvas.style.aspectRatio = map[state.ratio] || '3/4';
 }
 
-function buildPrompt(description, complexity, aspectRatio){
+const VARIATIONS = [
+  "Compose it as a wide establishing view with the subject placed in a full scene.",
+  "Compose it as a close-up, filling most of the frame with the subject seen from a different angle.",
+  "Compose it from a dynamic low or high viewpoint, with the subject in a different pose or action.",
+  "Compose it as a decorative arrangement, with the subject framed by border elements from its own world.",
+];
+
+function buildPrompt(description, complexity, aspectRatio, variationIndex, total){
   const map = {
     simple: "Very simple and bold: thick, smooth, continuous outlines only, minimal interior detail, large simple shapes, no fine linework, no cross-hatching, no texture — ideal for a young child (ages 3-6) to color easily.",
     medium: "Moderate detail: clear bold outlines with some simple interior linework to define features, balanced complexity — ideal for a child (ages 7-12).",
     detailed: "Rich, intricate detail: fine linework, decorative patterns and textures rendered purely as line art (in the spirit of a mandala or zentangle), many small enclosed areas to color — ideal for a teen or adult.",
   };
   const ratioLabel = { '3:4':'portrait (3:4)', '4:3':'landscape (4:3)', '1:1':'square (1:1)' }[aspectRatio] || aspectRatio;
+  const variation = total > 1
+    ? `\nThis is variation ${variationIndex + 1} of ${total} for the same subject. ${VARIATIONS[variationIndex % VARIATIONS.length]} Make it clearly distinct from the other variations.`
+    : '';
   return `Create a single black-and-white coloring book page.
 Subject: ${description}
 Style requirement: ${map[complexity]}
 Strict rules: pure line art only - solid black outlines on a completely plain white background. No shading, no gray fill, no color, no gradients, no cross-hatched shadows. The linework must be clean and unbroken, suitable for printing on paper and coloring in by hand with crayons or markers.
-Image aspect ratio: ${ratioLabel}.`;
+Image aspect ratio: ${ratioLabel}.${variation}`;
 }
 
 function showError(msg){ els.errorBox.innerHTML = `<div class="error">${msg}</div>`; }
@@ -503,8 +523,10 @@ async function callGemini(apiKey, model, prompt){
 
 function renderPreview(){
   if (state.busy){
+    const p = state.progress;
+    const label = p && p.total > 1 ? `กำลังวาดภาพที่ ${p.current} จาก ${p.total}` : 'กำลังวาดภาพ';
     els.canvas.innerHTML = '';
-    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>กำลังวาดภาพ</span><span>อาจใช้เวลา 10–30 วินาที</span></div><div class="track"><div class="bar"></div></div></div>`;
+    els.previewSub.innerHTML = `<div class="progress-wrap"><div class="progress-meta"><span>${label}</span><span>อาจใช้เวลา 10–30 วินาทีต่อภาพ</span></div><div class="track"><div class="bar"></div></div></div>`;
     els.downloadBtn.disabled = true;
     els.removeBtn.disabled = true;
     return;
@@ -598,22 +620,39 @@ els.genBtn.onclick = async () => {
 
   state.busy = true;
   els.genBtn.disabled = true;
-  els.genBtn.textContent = 'กำลังวาด…';
-  renderPreview();
+  const total = state.count;
+  const failures = [];
+  let made = 0;
 
-  try{
-    const result = await callGemini(apiKey, els.model.value, buildPrompt(description, state.complexity, state.ratio));
-    const id = Date.now().toString(36);
-    state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description, ratio: state.ratio });
-    state.selectedId = id;
-  }catch(err){
-    showError(err.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ');
-  }finally{
-    state.busy = false;
-    els.genBtn.disabled = false;
-    els.genBtn.textContent = 'วาดภาพระบายสี';
+  for (let i = 0; i < total; i++){
+    state.progress = { current: i + 1, total };
+    els.genBtn.textContent = total > 1 ? `กำลังวาด ${i+1}/${total}…` : 'กำลังวาด…';
     renderPreview();
-    renderList();
+
+    try{
+      const result = await callGemini(apiKey, els.model.value,
+        buildPrompt(description, state.complexity, state.ratio, i, total));
+      const id = Date.now().toString(36) + i;
+      state.pages.push({ id, dataUrl: result.dataUrl, mime: result.mime, desc: description, ratio: state.ratio });
+      state.selectedId = id;
+      made++;
+      renderList();
+    }catch(err){
+      failures.push(`ภาพที่ ${i+1}: ${err.message || 'ไม่ทราบสาเหตุ'}`);
+    }
+  }
+
+  state.busy = false;
+  state.progress = null;
+  els.genBtn.disabled = false;
+  els.genBtn.textContent = 'วาดภาพระบายสี';
+  renderPreview();
+  renderList();
+
+  if (failures.length){
+    showError(made > 0
+      ? `วาดสำเร็จ ${made} จาก ${total} ภาพ<br>${failures.join('<br>')}`
+      : failures.join('<br>'));
   }
 };
 
