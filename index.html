@@ -1410,11 +1410,11 @@ ve.clearStoryBtn.onclick = () => {
 async function veoGenerateClip(apiKey, modelId, prompt, ratio, firstFrame){
   const instance = { prompt };
   if (firstFrame){
-    instance.image = { inlineData: { mimeType: firstFrame.mime, data: firstFrame.base64 } };
+    instance.image = { bytesBase64Encoded: firstFrame.base64, mimeType: firstFrame.mime };
   }
   const body = {
     instances: [instance],
-    parameters: { aspectRatio: ratio, durationSeconds: '8', resolution: '720p' },
+    parameters: { aspectRatio: ratio, durationSeconds: 8, resolution: '720p' },
   };
 
   const start = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelId + ':predictLongRunning', {
